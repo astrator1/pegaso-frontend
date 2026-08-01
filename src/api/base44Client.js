@@ -106,6 +106,12 @@ const ENTITY_NAMES = [
 
 const entities = Object.fromEntries(ENTITY_NAMES.map((name) => [name, entityClient(name)]));
 
-const db = { auth, entities };
-export { db, auth, entities };
+const admin = {
+  listUsers: async () => request("/api/admin/users"),
+  approveUser: async (id) => request(`/api/admin/users/${id}/approve`, { method: "POST" }),
+  deleteUser: async (id) => request(`/api/admin/users/${id}`, { method: "DELETE" }),
+};
+
+const db = { auth, entities, admin };
+export { db, auth, entities, admin };
 export default db;
