@@ -2,7 +2,7 @@ const db = globalThis.__B44_DB__ || { auth:{ isAuthenticated: async()=>false, me
 
 # Base44 Project
 
-Use this repository to run and edit the app locally, then publish changes back through db.
+Use this repository to run and edit the app locally, then publish changes back through db. 
 
 Any change pushed to the repo will also be reflected in the Base44 Builder.
 
