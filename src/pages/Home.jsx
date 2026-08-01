@@ -3,13 +3,15 @@ import db from "@/api/base44Client";
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Users, BatteryCharging, Plus, LogOut } from "lucide-react";
+import { Users, BatteryCharging, Plus, LogOut, ShieldCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useAuth } from "@/lib/AuthContext";
 
 import { Drone } from "@/components/DroneIcon";
 
 export default function Home() {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [counts, setCounts] = useState({ pilotos: null, aeronaves: null, baterias: null });
 
   React.useEffect(() => {
@@ -29,7 +31,12 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-100 relative rounded opacity-100">
-      <div className="absolute top-6 right-6 no-print">
+      <div className="absolute top-6 right-6 no-print flex gap-2">
+        {user?.role === "admin" && (
+          <Button variant="outline" size="sm" onClick={() => navigate("/admin/usuarios")}>
+            <ShieldCheck className="w-4 h-4" /> Usuarios
+          </Button>
+        )}
         <Button variant="outline" size="sm" onClick={() => db.auth.logout(true)}><LogOut className="w-4 h-4" /> Cerrar sesión</Button>
       </div>
       <div className="max-w-6xl mx-auto px-6 py-12">
