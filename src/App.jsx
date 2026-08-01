@@ -23,6 +23,7 @@ import Baterias from '@/pages/Baterias';
 import BateriaGestion from '@/pages/BateriaGestion';
 import BateriaMantenimientos from '@/pages/BateriaMantenimientos';
 import BateriaDetalle from '@/pages/BateriaDetalle';
+import AdminUsuarios from '@/pages/AdminUsuarios';
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
@@ -66,6 +67,7 @@ const AuthenticatedApp = () => {
         <Route path="/baterias/gestion" element={<BateriaGestion />} />
         <Route path="/baterias/mantenimientos" element={<BateriaMantenimientos />} />
         <Route path="/baterias/:id" element={<BateriaDetalle />} />
+        <Route path="/admin/usuarios" element={<AdminUsuarios />} />
       </Route>
       <Route path="*" element={<PageNotFound />} />
     </Routes>
