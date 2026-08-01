@@ -15,6 +15,7 @@ export default function Register() {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [pending, setPending] = useState(false);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -25,14 +26,36 @@ export default function Register() {
     }
     setLoading(true);
     try {
-      await db.auth.register({ email, password });
-      window.location.href = "/";
+      const result = await db.auth.register({ email, password });
+      if (result?.pending) {
+        setPending(true);
+      } else {
+        window.location.href = "/";
+      }
     } catch (err) {
       setError(err.message || "No se pudo crear la cuenta");
     } finally {
       setLoading(false);
     }
   };
+
+  if (pending) {
+    return (
+      <AuthLayout
+        icon={UserPlus}
+        title="Cuenta creada"
+        subtitle="Un paso más antes de empezar"
+      >
+        <div className="p-4 rounded-lg bg-amber-50 text-amber-800 text-sm text-center">
+          Tu cuenta se ha creado correctamente. Un administrador tiene que aprobarla antes de
+          que puedas entrar — te avisará cuando esté lista.
+        </div>
+        <Link to="/login" className="block text-center text-primary font-medium hover:underline mt-6">
+          Volver a inicio de sesión
+        </Link>
+      </AuthLayout>
+    );
+  }
 
   return (
     <AuthLayout
