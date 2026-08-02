@@ -109,6 +109,8 @@ const entities = Object.fromEntries(ENTITY_NAMES.map((name) => [name, entityClie
 const admin = {
   listUsers: async () => request("/api/admin/users"),
   approveUser: async (id) => request(`/api/admin/users/${id}/approve`, { method: "POST" }),
+  resetPassword: async (id, newPassword) =>
+    request(`/api/admin/users/${id}/reset-password`, { method: "POST", body: { newPassword } }),
   deleteUser: async (id) => request(`/api/admin/users/${id}`, { method: "DELETE" }),
 };
 
