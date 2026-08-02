@@ -50,7 +50,10 @@ export default function Home() {
           className="mb-12">
           
           <p className="text-sm font-medium text-slate-400 uppercase tracking-widest mb-2">MENÚ PRINCIPAL</p>
-          <h1 className="text-4xl md:text-5xl font-bold text-slate-900 tracking-tight">Pegaso Control UAS</h1>
+          <div className="flex items-center gap-4">
+            <h1 className="text-4xl md:text-5xl font-bold text-slate-900 tracking-tight">Pegaso Control UAS</h1>
+            <img src="/logo-pegaso.gif" alt="Unidad Pegaso" className="h-16 md:h-20 w-auto" />
+          </div>
           <p className="text-slate-500 mt-3 text-lg">Gestiona pilotos, aeronaves y baterías desde un único panel.</p>
         </motion.div>
 
@@ -88,7 +91,7 @@ export default function Home() {
         </div>
       </div>
       <div className="absolute bottom-3 right-4 text-xs text-slate-300 select-none no-print">
-        DNT
+        DNT CÓRDOBA GC
       </div>
     </div>);
 
