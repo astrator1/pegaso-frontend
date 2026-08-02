@@ -113,6 +113,7 @@ const admin = {
   approveUser: async (id) => request(`/api/admin/users/${id}/approve`, { method: "POST" }),
   resetPassword: async (id, newPassword) =>
     request(`/api/admin/users/${id}/reset-password`, { method: "POST", body: { newPassword } }),
+  setRole: async (id, role) => request(`/api/admin/users/${id}/role`, { method: "POST", body: { role } }),
   deleteUser: async (id) => request(`/api/admin/users/${id}`, { method: "DELETE" }),
 };
 
