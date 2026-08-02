@@ -84,6 +84,9 @@ export default function Home() {
           })}
         </div>
       </div>
+      <div className="absolute bottom-3 right-4 text-xs text-slate-300 select-none no-print">
+        DNT
+      </div>
     </div>);
 
 }
