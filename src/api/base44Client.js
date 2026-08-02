@@ -66,6 +66,8 @@ const auth = {
   resetPasswordRequest: async (email) => request("/api/auth/forgot-password", { method: "POST", body: { email } }),
   resetPassword: async ({ resetToken, newPassword }) =>
     request("/api/auth/reset-password", { method: "POST", body: { resetToken, newPassword } }),
+  changePassword: async (currentPassword, newPassword) =>
+    request("/api/auth/change-password", { method: "POST", body: { currentPassword, newPassword } }),
   logout: (redirectTo) => {
     setToken(null);
     if (redirectTo) window.location.href = "/login";
