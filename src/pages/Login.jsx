@@ -1,4 +1,4 @@
-iimport db from "@/api/base44Client";
+import db from "@/api/base44Client";
 
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
