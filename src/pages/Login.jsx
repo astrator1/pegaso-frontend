@@ -1,4 +1,4 @@
-import db from "@/api/base44Client";
+iimport db from "@/api/base44Client";
 
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
@@ -23,7 +23,7 @@ export default function Login() {
       await db.auth.loginViaEmailPassword(email, password);
       window.location.href = "/";
     } catch (err) {
-      setError(err.message || "Invalid email or password");
+      setError(err.message || "Email o contraseña incorrectos");
     } finally {
       setLoading(false);
     }
@@ -32,13 +32,13 @@ export default function Login() {
   return (
     <AuthLayout
       icon={LogIn}
-      title="Welcome back"
-      subtitle="Log in to your account"
+      title="Bienvenido a PEGASO CONTROL UAS"
+      subtitle="Inicia sesión en tu cuenta"
       footer={
         <>
-          Don't have an account?{" "}
+          ¿No tienes una cuenta?{" "}
           <Link to="/register" className="text-primary font-medium hover:underline">
-            Create one
+            Créala aquí
           </Link>
         </>
       }
@@ -59,7 +59,7 @@ export default function Login() {
               type="email"
               autoComplete="email"
               autoFocus
-              placeholder="you@example.com"
+              placeholder="tu@email.com"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               className="pl-10 h-12"
@@ -69,9 +69,9 @@ export default function Login() {
         </div>
         <div className="space-y-2">
           <div className="flex items-center justify-between">
-            <Label htmlFor="password">Password</Label>
+            <Label htmlFor="password">Contraseña</Label>
             <Link to="/forgot-password" className="text-xs text-primary hover:underline">
-              Forgot password?
+              ¿Olvidaste tu contraseña?
             </Link>
           </div>
           <div className="relative">
@@ -92,10 +92,10 @@ export default function Login() {
           {loading ? (
             <>
               <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-              Logging in...
+              Iniciando sesión...
             </>
           ) : (
-            "Log in"
+            "Iniciar sesión"
           )}
         </Button>
       </form>
