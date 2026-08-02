@@ -60,8 +60,8 @@ export default function Register() {
   return (
     <AuthLayout
       icon={UserPlus}
-      title="Crea tu cuenta"
-      subtitle="Regístrate para empezar"
+      title="Bienvenido a PEGASO CONTROL UAS"
+      subtitle="Crea tu cuenta para empezar"
       footer={
         <>
           ¿Ya tienes una cuenta?{" "}
