@@ -32,7 +32,7 @@ export default function Login() {
   return (
     <AuthLayout
       icon={LogIn}
-      title="Bienvenido a PEGASO CONTROL UAS"
+      title="Bienvenido a Pegaso Control UAS"
       subtitle="Inicia sesión en tu cuenta"
       footer={
         <>
