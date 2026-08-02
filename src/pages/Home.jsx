@@ -1,9 +1,9 @@
-import db from "@/api/base44Client"; 
+import db from "@/api/base44Client";
 
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Users, BatteryCharging, Plus, LogOut, ShieldCheck } from "lucide-react";
+import { Users, BatteryCharging, Plus, LogOut, ShieldCheck, KeyRound } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/lib/AuthContext";
 
@@ -37,6 +37,9 @@ export default function Home() {
             <ShieldCheck className="w-4 h-4" /> Usuarios
           </Button>
         )}
+        <Button variant="outline" size="sm" onClick={() => navigate("/cambiar-contrasena")}>
+          <KeyRound className="w-4 h-4" /> Mi contraseña
+        </Button>
         <Button variant="outline" size="sm" onClick={() => db.auth.logout(true)}><LogOut className="w-4 h-4" /> Cerrar sesión</Button>
       </div>
       <div className="max-w-6xl mx-auto px-6 py-12">
