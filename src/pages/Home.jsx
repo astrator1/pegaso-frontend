@@ -59,7 +59,7 @@ export default function Home() {
           
           <p className="text-sm font-medium text-slate-400 uppercase tracking-widest mb-2">MENÚ PRINCIPAL</p>
           <div className="flex items-center gap-4">
-            <h1 className="text-4xl md:text-5xl font-bold text-slate-900 tracking-tight">Pegaso Control UAS</h1>
+            <h1 className="text-4xl md:text-5xl font-bold text-slate-900 tracking-tight">Pegaso Córdoba Control UAS</h1>
             <img src="/logo-pegaso.gif" alt="Unidad Pegaso" className="h-16 md:h-20 w-auto" />
           </div>
           <p className="text-slate-500 mt-3 text-lg">Gestiona pilotos, aeronaves y baterías desde un único panel.</p>
