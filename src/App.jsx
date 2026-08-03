@@ -26,6 +26,8 @@ import BateriaMantenimientos from '@/pages/BateriaMantenimientos';
 import BateriaDetalle from '@/pages/BateriaDetalle';
 import AdminUsuarios from '@/pages/AdminUsuarios';
 import CambiarContrasena from '@/pages/CambiarContrasena';
+import PanelEstadistico from '@/pages/PanelEstadistico';
+import Misiones from '@/pages/Misiones';
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
@@ -63,6 +65,8 @@ const AuthenticatedApp = () => {
         <Route path="/admin/usuarios" element={<AdminUsuarios />} />
         <Route path="/cambiar-contrasena" element={<CambiarContrasena />} />
         <Route element={<StaffRoute />}>
+          <Route path="/panel" element={<PanelEstadistico />} />
+          <Route path="/misiones" element={<Misiones />} />
           <Route path="/pilotos" element={<Pilotos />} />
           <Route path="/aeronaves" element={<AeronavesPanel />} />
           <Route path="/aeronaves/estado" element={<EstadoFlota />} />
