@@ -48,7 +48,7 @@ export default function Pilotos() {
   const load = async () => {
     setLoading(true);
     try {
-      const data = await db.entities.Piloto.list("-created_date", 100);
+      const data = await db.entities.Piloto.list("created_date", 100);
       setItems(data);
     } catch (e) {
       // ignore

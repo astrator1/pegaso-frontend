@@ -37,7 +37,7 @@ export default function Aeronaves() {
     setLoading(true);
     try {
       const [data, v] = await Promise.all([
-        db.entities.Aeronave.list("-created_date", 100),
+        db.entities.Aeronave.list("fecha_adjudicacion", 100),
         db.entities.Vuelo.list(),
       ]);
       setItems(data);
