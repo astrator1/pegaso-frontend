@@ -22,6 +22,7 @@ export default function VueloForm({ open, onOpenChange, onSaved, editing }) {
   const [aeronaves, setAeronaves] = useState([]);
   const [pilotos, setPilotos] = useState([]);
   const [baterias, setBaterias] = useState([]);
+  const [misiones, setMisiones] = useState([]);
 
   useEffect(() => {
     if (open) setForm(editing ? { ...empty, ...editing } : empty);
@@ -30,12 +31,13 @@ export default function VueloForm({ open, onOpenChange, onSaved, editing }) {
   useEffect(() => {
     (async () => {
       try {
-        const [a, p, b] = await Promise.all([
+        const [a, p, b, m] = await Promise.all([
           db.entities.Aeronave.list(),
           db.entities.Piloto.list(),
           db.entities.Bateria.list(),
+          db.entities.Mision.list("nombre", 200),
         ]);
-        setAeronaves(a); setPilotos(p); setBaterias(b);
+        setAeronaves(a); setPilotos(p); setBaterias(b); setMisiones(m);
       } catch (e) { /* ignore */ }
     })();
   }, []);
@@ -86,7 +88,16 @@ export default function VueloForm({ open, onOpenChange, onSaved, editing }) {
                 </SelectContent>
               </Select>
             </div>
-            <div className="grid gap-2"><Label>Misión</Label><Input value={form.mision} onChange={(e) => set("mision", e.target.value)} /></div>
+            <div className="grid gap-2">
+              <Label>Misión</Label>
+              <Select value={form.mision} onValueChange={(v) => set("mision", v)}>
+                <SelectTrigger><SelectValue placeholder="Selecciona misión" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value={null}>Sin asignar</SelectItem>
+                  {misiones.map((m) => <SelectItem key={m.id} value={m.nombre}>{m.nombre}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div className="grid gap-2"><Label>Lugar de despegue y aterrizaje</Label><Input value={form.lugar} onChange={(e) => set("lugar", e.target.value)} /></div>
@@ -97,7 +108,7 @@ export default function VueloForm({ open, onOpenChange, onSaved, editing }) {
               <SelectTrigger><SelectValue placeholder="Selecciona batería" /></SelectTrigger>
               <SelectContent>
                 <SelectItem value={null}>Sin asignar</SelectItem>
-                {baterias.filter((b) => b.estado !== "Desechada").map((b) => <SelectItem key={b.id} value={b.numero_asignado}>{b.numero_asignado} — {b.marca} {b.modelo}</SelectItem>)}
+                {baterias.filter((b) => b.estado !== "Desechada").sort((a, b) => { const aN = parseInt(a.numero_asignado, 10); const bN = parseInt(b.numero_asignado, 10); if (!isNaN(aN) && !isNaN(bN)) return aN - bN; return (a.numero_asignado || "").localeCompare(b.numero_asignado || ""); }).map((b) => <SelectItem key={b.id} value={b.numero_asignado}>{b.numero_asignado} — {b.marca} {b.modelo}</SelectItem>)}
               </SelectContent>
             </Select>
           </div>

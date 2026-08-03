@@ -25,7 +25,7 @@ const BulkTableBody = React.memo(function BulkTableBody({ rows, handleBlur }) {
           <td className="py-1 px-1"><input list="dl-matricula" className={inputClass} defaultValue={r.matricula} onChange={(e) => { r.matricula = e.target.value; }} onBlur={handleBlur} /></td>
           <td className="py-1 px-1"><input type="date" className={inputClass} defaultValue={r.fecha} onChange={(e) => { r.fecha = e.target.value; }} onBlur={handleBlur} /></td>
           <td className="py-1 px-1"><input list="dl-piloto" className={inputClass} defaultValue={r.piloto} onChange={(e) => { r.piloto = e.target.value; }} /></td>
-          <td className="py-1 px-1"><input className={inputClass} defaultValue={r.mision} onChange={(e) => { r.mision = e.target.value; }} /></td>
+          <td className="py-1 px-1"><input list="dl-mision" className={inputClass} defaultValue={r.mision} onChange={(e) => { r.mision = e.target.value; }} /></td>
           <td className="py-1 px-1"><input className={inputClass} defaultValue={r.lugar} onChange={(e) => { r.lugar = e.target.value; }} /></td>
           <td className="py-1 px-1"><input list="dl-bateria" className={inputClass} defaultValue={r.bateria} onChange={(e) => { r.bateria = e.target.value; }} /></td>
           <td className="py-1 px-1"><input type="time" className={inputClass} defaultValue={r.hora_despegue} onChange={(e) => { r.hora_despegue = e.target.value; }} /></td>
@@ -42,6 +42,7 @@ export default function VueloBulkForm({ open, onOpenChange, onSaved }) {
   const [aeronaves, setAeronaves] = useState([]);
   const [pilotos, setPilotos] = useState([]);
   const [baterias, setBaterias] = useState([]);
+  const [misiones, setMisiones] = useState([]);
   const [saving, setSaving] = useState(false);
   const [validCount, setValidCount] = useState(0);
   const [pasteText, setPasteText] = useState("");
@@ -57,12 +58,13 @@ export default function VueloBulkForm({ open, onOpenChange, onSaved }) {
   useEffect(() => {
     (async () => {
       try {
-        const [a, p, b] = await Promise.all([
+        const [a, p, b, m] = await Promise.all([
           db.entities.Aeronave.list(),
           db.entities.Piloto.list(),
           db.entities.Bateria.list(),
+          db.entities.Mision.list("nombre", 200),
         ]);
-        setAeronaves(a); setPilotos(p); setBaterias(b);
+        setAeronaves(a); setPilotos(p); setBaterias(b); setMisiones(m);
       } catch (e) { /* ignore */ }
     })();
   }, []);
@@ -145,7 +147,8 @@ export default function VueloBulkForm({ open, onOpenChange, onSaved }) {
           </table>
           <datalist id="dl-matricula">{aeronaves.map((a) => <option key={a.id} value={a.matricula} />)}</datalist>
           <datalist id="dl-piloto">{pilotos.map((p) => <option key={p.id} value={`${p.nombre} ${p.apellidos || ""}`.trim()} />)}</datalist>
-          <datalist id="dl-bateria">{baterias.map((b) => <option key={b.id} value={b.numero_asignado} />)}</datalist>
+          <datalist id="dl-mision">{misiones.map((m) => <option key={m.id} value={m.nombre} />)}</datalist>
+          <datalist id="dl-bateria">{baterias.filter((b) => b.estado !== "Desechada").sort((a, b) => { const aN = parseInt(a.numero_asignado, 10); const bN = parseInt(b.numero_asignado, 10); if (!isNaN(aN) && !isNaN(bN)) return aN - bN; return (a.numero_asignado || "").localeCompare(b.numero_asignado || ""); }).map((b) => <option key={b.id} value={b.numero_asignado} />)}</datalist>
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>Cancelar</Button>
