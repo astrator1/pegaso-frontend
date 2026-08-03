@@ -104,6 +104,7 @@ const ENTITY_NAMES = [
   "Mision",
   "Modificaciones",
   "Piloto",
+  "PlanVuelo",
   "Vuelo",
 ];
 
@@ -118,6 +119,11 @@ const admin = {
   deleteUser: async (id) => request(`/api/admin/users/${id}`, { method: "DELETE" }),
 };
 
-const db = { auth, entities, admin };
-export { db, auth, entities, admin };
+const planVuelo = {
+  decidir: async (id, estado, comentario) =>
+    request(`/api/planes-vuelo/${id}/decidir`, { method: "POST", body: { estado, comentario } }),
+};
+
+const db = { auth, entities, admin, planVuelo };
+export { db, auth, entities, admin, planVuelo };
 export default db;
