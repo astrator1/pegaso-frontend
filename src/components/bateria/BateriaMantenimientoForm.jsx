@@ -59,7 +59,7 @@ export default function BateriaMantenimientoForm({ open, onOpenChange, onSaved, 
                 <Select value={form.bateria_numero} onValueChange={(v) => set("bateria_numero", v)}>
                   <SelectTrigger><SelectValue placeholder="Selecciona batería" /></SelectTrigger>
                   <SelectContent>
-                    {baterias.map((b) => <SelectItem key={b.id} value={b.numero_asignado}>{b.numero_asignado} — {b.marca} {b.modelo}</SelectItem>)}
+                    {baterias.sort((a, b) => { const aN = parseInt(a.numero_asignado, 10); const bN = parseInt(b.numero_asignado, 10); if (!isNaN(aN) && !isNaN(bN)) return aN - bN; return (a.numero_asignado || "").localeCompare(b.numero_asignado || ""); }).map((b) => <SelectItem key={b.id} value={b.numero_asignado}>{b.numero_asignado} — {b.marca} {b.modelo}</SelectItem>)}
                   </SelectContent>
                 </Select>
               )}
