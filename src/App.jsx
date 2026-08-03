@@ -28,6 +28,8 @@ import AdminUsuarios from '@/pages/AdminUsuarios';
 import CambiarContrasena from '@/pages/CambiarContrasena';
 import PanelEstadistico from '@/pages/PanelEstadistico';
 import Misiones from '@/pages/Misiones';
+import PlanesVuelo from '@/pages/PlanesVuelo';
+import PlanVueloForm from '@/pages/PlanVueloForm';
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
@@ -64,6 +66,9 @@ const AuthenticatedApp = () => {
         <Route path="/aeronaves/registro" element={<RegistroGeneral />} />
         <Route path="/admin/usuarios" element={<AdminUsuarios />} />
         <Route path="/cambiar-contrasena" element={<CambiarContrasena />} />
+        <Route path="/planes-vuelo" element={<PlanesVuelo />} />
+        <Route path="/planes-vuelo/nuevo" element={<PlanVueloForm />} />
+        <Route path="/planes-vuelo/:id" element={<PlanVueloForm />} />
         <Route element={<StaffRoute />}>
           <Route path="/panel" element={<PanelEstadistico />} />
           <Route path="/misiones" element={<Misiones />} />
