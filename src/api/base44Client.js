@@ -101,6 +101,7 @@ const ENTITY_NAMES = [
   "BateriaMantenimiento",
   "Mantenimiento",
   "Material",
+  "Mision",
   "Modificaciones",
   "Piloto",
   "Vuelo",
