@@ -73,6 +73,18 @@ export default function RegistroGeneral() {
     for (const id of selected) { try { await db.entities.Vuelo.delete(id); } catch (e) { } }
     setSelected([]); load();
   };
+  const bulkValidar = async (ids) => {
+    setBusyId("bulk");
+    for (const id of ids) { try { await db.vueloRevision.decidir(id, "validado"); } catch (e) { } }
+    setBusyId(null);
+    setSelected([]); load();
+  };
+  const validarTodosPendientes = () => {
+    const ids = vuelos.filter((v) => !v.estado || v.estado === "pendiente").map((v) => v.id);
+    if (ids.length === 0) return;
+    if (!window.confirm(`¿Validar los ${ids.length} vuelos pendientes?`)) return;
+    bulkValidar(ids);
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-100">
@@ -95,6 +107,11 @@ export default function RegistroGeneral() {
               <Input className="pl-9" placeholder="Buscar..." value={query} onChange={(e) => setQuery(e.target.value)} />
             </div>
             <Button onClick={() => setBulkOpen(true)} variant="outline"><Upload className="w-4 h-4 mr-1" /> Carga masiva</Button>
+            {isAdminLevel && pendientes > 0 && (
+              <Button onClick={validarTodosPendientes} disabled={busyId === "bulk"} variant="outline" className="text-green-700 border-green-200 hover:bg-green-50">
+                <Check className="w-4 h-4 mr-1" /> Validar todos los pendientes ({pendientes})
+              </Button>
+            )}
             <Button onClick={openNew} className="bg-green-800 hover:bg-green-900"><Plus className="w-4 h-4 mr-1" /> Añadir vuelo</Button>
             <PrintButton />
           </div>
@@ -103,6 +120,11 @@ export default function RegistroGeneral() {
         {selected.length > 0 && (
           <div className="flex items-center gap-3 mb-4 no-print">
             <span className="text-sm text-slate-600">{selected.length} seleccionado(s)</span>
+            {isAdminLevel && (
+              <Button variant="outline" size="sm" disabled={busyId === "bulk"} className="text-green-700 border-green-200 hover:bg-green-50" onClick={() => bulkValidar(selected)}>
+                <Check className="w-4 h-4 mr-1" /> Validar seleccionados
+              </Button>
+            )}
             <Button variant="destructive" size="sm" onClick={bulkDelete}><Trash2 className="w-4 h-4 mr-1" /> Borrar seleccionados</Button>
             <Button variant="ghost" size="sm" onClick={() => setSelected([])}>Cancelar</Button>
           </div>
