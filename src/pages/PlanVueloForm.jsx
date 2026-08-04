@@ -276,7 +276,7 @@ export default function PlanVueloForm() {
                 <Select disabled={!editable} value={form.piloto_al_mando_id} onValueChange={(v) => set("piloto_al_mando_id", v)}>
                   <SelectTrigger><SelectValue placeholder="Selecciona piloto al mando" /></SelectTrigger>
                   <SelectContent>
-                    {pilotos.map((p) => <SelectItem key={p.id} value={p.id}>{p.nombre} {p.apellidos}</SelectItem>)}
+                    {pilotos.filter((p) => p.gestionado !== false || p.id === form.piloto_al_mando_id).map((p) => <SelectItem key={p.id} value={p.id}>{p.nombre} {p.apellidos}</SelectItem>)}
                   </SelectContent>
                 </Select>
                 {pilotoAlMando && (
@@ -289,7 +289,7 @@ export default function PlanVueloForm() {
               <div className="grid gap-2">
                 <Label>Personal necesario</Label>
                 <div className="border border-slate-200 rounded-lg divide-y divide-slate-100 max-h-48 overflow-y-auto">
-                  {pilotos.map((p) => (
+                  {pilotos.filter((p) => p.gestionado !== false || form.personal_necesario_ids.includes(p.id)).map((p) => (
                     <label key={p.id} className="flex items-center gap-2 px-3 py-2 text-sm cursor-pointer hover:bg-slate-50">
                       <Checkbox
                         disabled={!editable}
