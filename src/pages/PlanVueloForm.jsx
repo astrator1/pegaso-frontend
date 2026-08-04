@@ -48,7 +48,7 @@ function ChecklistSection({ codigoTitulo, titulo, checklist, respuestas, setResp
       <h2 className="text-lg font-semibold text-slate-900">{codigoTitulo} {titulo}</h2>
       {checklist.map((grupo) => (
         <div key={grupo.key} className="rounded-xl border border-slate-200 overflow-hidden">
-          <div className="flex items-center justify-between bg-slate-100 px-4 py-2.5">
+          <div className="flex items-center justify-between bg-slate-100 px-4 py-2.5 avoid-break">
             <span className="font-medium text-slate-800 text-sm">
               <span className="text-slate-400 mr-2">{grupo.codigo}</span>{grupo.label}
             </span>
@@ -59,7 +59,7 @@ function ChecklistSection({ codigoTitulo, titulo, checklist, respuestas, setResp
               if (item.auto) {
                 const apto = pilotoAlMando?.radiofonista_apto;
                 return (
-                  <div key={item.key} className="flex items-center justify-between px-4 py-2.5">
+                  <div key={item.key} className="flex items-center justify-between px-4 py-2.5 avoid-break">
                     <span className="text-sm text-slate-600 flex-1 pr-4">
                       <span className="text-slate-400 mr-2">{item.codigo}</span>{item.label}
                     </span>
@@ -79,7 +79,7 @@ function ChecklistSection({ codigoTitulo, titulo, checklist, respuestas, setResp
               }
               if (item.freeText) {
                 return (
-                  <div key={item.key} className="px-4 py-2.5 space-y-2">
+                  <div key={item.key} className="px-4 py-2.5 space-y-2 avoid-break">
                     <div className="flex items-center justify-between">
                       <span className="text-sm text-slate-600">
                         <span className="text-slate-400 mr-2">{item.codigo}</span>Otras limitaciones (descríbelas si aplica)
@@ -97,7 +97,7 @@ function ChecklistSection({ codigoTitulo, titulo, checklist, respuestas, setResp
                 );
               }
               return (
-                <div key={item.key} className="flex items-center justify-between px-4 py-2.5">
+                <div key={item.key} className="flex items-center justify-between px-4 py-2.5 avoid-break">
                   <span className="text-sm text-slate-600 flex-1 pr-4">
                     <span className="text-slate-400 mr-2">{item.codigo}</span>{item.label}
                   </span>
@@ -207,7 +207,7 @@ export default function PlanVueloForm() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-100">
-      <div className="max-w-3xl mx-auto px-6 py-10" id="print-area">
+      <div className="max-w-3xl mx-auto px-6 py-10 portrait-page" id="print-area">
         <PrintHeader title={`Plan de Vuelo Operacional — ${form.titulo || "Sin título"}`} />
         <div className="flex items-center justify-between mb-6 no-print">
           <div className="flex items-center gap-4">
@@ -274,11 +274,14 @@ export default function PlanVueloForm() {
               <div className="grid gap-2">
                 <Label>Piloto al mando</Label>
                 <Select disabled={!editable} value={form.piloto_al_mando_id} onValueChange={(v) => set("piloto_al_mando_id", v)}>
-                  <SelectTrigger><SelectValue placeholder="Selecciona piloto al mando" /></SelectTrigger>
+                  <SelectTrigger className="no-print"><SelectValue placeholder="Selecciona piloto al mando" /></SelectTrigger>
                   <SelectContent>
                     {pilotos.filter((p) => p.gestionado !== false || p.id === form.piloto_al_mando_id).map((p) => <SelectItem key={p.id} value={p.id}>{p.nombre} {p.apellidos}</SelectItem>)}
                   </SelectContent>
                 </Select>
+                <p className="hidden print:block text-sm text-slate-700">
+                  {pilotoAlMando ? `${pilotoAlMando.nombre} ${pilotoAlMando.apellidos}` : "Sin asignar"}
+                </p>
                 {pilotoAlMando && (
                   <p className="text-xs text-slate-500 flex items-center gap-1">
                     <Radio className="w-3 h-3" /> Radiofonista: {pilotoAlMando.radiofonista_apto ? "Sí" : "No"}
@@ -288,7 +291,7 @@ export default function PlanVueloForm() {
               </div>
               <div className="grid gap-2">
                 <Label>Personal necesario</Label>
-                <div className="border border-slate-200 rounded-lg divide-y divide-slate-100 max-h-48 overflow-y-auto">
+                <div className="border border-slate-200 rounded-lg divide-y divide-slate-100 max-h-48 overflow-y-auto no-print">
                   {pilotos.filter((p) => p.gestionado !== false || form.personal_necesario_ids.includes(p.id)).map((p) => (
                     <label key={p.id} className="flex items-center gap-2 px-3 py-2 text-sm cursor-pointer hover:bg-slate-50">
                       <Checkbox
@@ -300,17 +303,26 @@ export default function PlanVueloForm() {
                     </label>
                   ))}
                 </div>
+                <p className="hidden print:block text-sm text-slate-700">
+                  {pilotos.filter((p) => form.personal_necesario_ids.includes(p.id)).map((p) => `${p.nombre} ${p.apellidos}`).join(", ") || "Sin personal asignado"}
+                </p>
               </div>
               <div className="grid gap-2">
                 <Label>UAS previsto</Label>
                 <Select disabled={!editable} value={form.uas_previsto_id} onValueChange={(v) => set("uas_previsto_id", v)}>
-                  <SelectTrigger><SelectValue placeholder="Selecciona aeronave" /></SelectTrigger>
+                  <SelectTrigger className="no-print"><SelectValue placeholder="Selecciona aeronave" /></SelectTrigger>
                   <SelectContent>
                     {[...aeronaves].sort((x, y) => (x.retirada ? 1 : 0) - (y.retirada ? 1 : 0)).map((a) => (
                       <SelectItem key={a.id} value={a.id}>{a.marca} {a.modelo} ({a.matricula}){a.retirada ? " (retirada)" : ""}</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
+                <p className="hidden print:block text-sm text-slate-700">
+                  {(() => {
+                    const uas = aeronaves.find((a) => a.id === form.uas_previsto_id);
+                    return uas ? `${uas.marca} ${uas.modelo} (${uas.matricula})` : "Sin asignar";
+                  })()}
+                </p>
               </div>
               <div className="grid gap-2">
                 <Label>Medios materiales específicos requeridos</Label>

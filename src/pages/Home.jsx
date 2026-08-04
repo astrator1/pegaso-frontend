@@ -36,8 +36,10 @@ export default function Home() {
     if (!(user?.role === "admin" || user?.role === "superadmin")) return;
     (async () => {
       try {
-        const planes = await db.entities.PlanVuelo.list();
-        setPlanesPendientes(planes.filter((p) => !p.estado || p.estado === "pendiente").length);
+        const [planes, vuelos] = await Promise.all([db.entities.PlanVuelo.list(), db.entities.Vuelo.list()]);
+        const planesPend = planes.filter((p) => !p.estado || p.estado === "pendiente").length;
+        const vuelosPend = vuelos.filter((v) => !v.estado || v.estado === "pendiente").length;
+        setPlanesPendientes(planesPend + vuelosPend);
       } catch (e) { /* ignore */ }
     })();
   }, [user]);

@@ -11,6 +11,7 @@ export default function Operaciones() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const [planesPendientes, setPlanesPendientes] = useState(null);
+  const [vuelosPendientes, setVuelosPendientes] = useState(null);
 
   useEffect(() => {
     (async () => {
@@ -21,10 +22,19 @@ export default function Operaciones() {
     })();
   }, []);
 
+  useEffect(() => {
+    (async () => {
+      try {
+        const vuelos = await db.entities.Vuelo.list();
+        setVuelosPendientes(vuelos.filter((v) => !v.estado || v.estado === "pendiente").length);
+      } catch (e) { /* ignore */ }
+    })();
+  }, []);
+
   const isAdminLevel = user?.role === "admin" || user?.role === "superadmin";
 
   const cards = [
-    { key: "registro", label: "Registro de Vuelos", desc: "Consulta y registra vuelos", icon: FileText, path: "/aeronaves/registro", gradient: "from-green-600 to-green-800" },
+    { key: "registro", label: "Registro de Vuelos", desc: isAdminLevel ? "Consulta, registra y valida vuelos" : "Consulta y registra tus vuelos", icon: FileText, path: "/aeronaves/registro", gradient: "from-green-600 to-green-800", badge: isAdminLevel ? vuelosPendientes : null },
     { key: "planes", label: "Planes de Vuelo Operacional", desc: isAdminLevel ? "Autoriza los planes de la unidad" : "Crea y consulta tus planes", icon: ClipboardList, path: "/planes-vuelo", gradient: "from-blue-600 to-blue-800", badge: isAdminLevel ? planesPendientes : null },
   ];
 

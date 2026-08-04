@@ -3,10 +3,12 @@ import db from "@/api/base44Client";
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { ArrowLeft, Plus, Pencil, Trash2, FileText, Search, Upload } from "lucide-react";
+import { ArrowLeft, Plus, Pencil, Trash2, FileText, Search, Upload, Check, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Badge } from "@/components/ui/badge";
+import { useAuth } from "@/lib/AuthContext";
 
 import { flightDuration, formatDuration } from "@/lib/vuelo";
 import VueloForm from "@/components/vuelos/VueloForm";
@@ -16,6 +18,8 @@ import PrintHeader from "@/components/PrintHeader";
 
 export default function RegistroGeneral() {
   const navigate = useNavigate();
+  const { user } = useAuth();
+  const isAdminLevel = user?.role === "admin" || user?.role === "superadmin";
   const backTo = "/operaciones";
   const [vuelos, setVuelos] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -24,6 +28,7 @@ export default function RegistroGeneral() {
   const [query, setQuery] = useState("");
   const [selected, setSelected] = useState([]);
   const [bulkOpen, setBulkOpen] = useState(false);
+  const [busyId, setBusyId] = useState(null);
 
   const load = async () => {
     setLoading(true);
@@ -49,6 +54,18 @@ export default function RegistroGeneral() {
   const remove = async (id) => { await db.entities.Vuelo.delete(id); load(); };
   const openNew = () => { setEditing(null); setOpen(true); };
   const openEdit = (v) => { setEditing(v); setOpen(true); };
+  const canEditVuelo = (v) => isAdminLevel || !v.estado || v.estado === "pendiente";
+
+  const handleDecidir = async (id, estado) => {
+    setBusyId(id);
+    try {
+      await db.vueloRevision.decidir(id, estado);
+      load();
+    } catch (e) { /* ignore */ }
+    finally { setBusyId(null); }
+  };
+
+  const pendientes = vuelos.filter((v) => !v.estado || v.estado === "pendiente").length;
 
   const toggleSelected = (id) => setSelected((s) => s.includes(id) ? s.filter((x) => x !== id) : [...s, id]);
   const toggleAll = () => setSelected(selected.length === filtered.length && filtered.length > 0 ? [] : filtered.map((v) => v.id));
@@ -66,7 +83,10 @@ export default function RegistroGeneral() {
             <Button variant="ghost" size="icon" onClick={() => navigate(backTo)}><ArrowLeft className="w-5 h-5" /></Button>
             <div>
               <h1 className="text-3xl font-bold text-slate-900">Registro General</h1>
-              <p className="text-slate-500">{filtered.length} vuelo(s) registrado(s)</p>
+              <p className="text-slate-500">
+                {filtered.length} vuelo(s) registrado(s)
+                {isAdminLevel && pendientes > 0 ? ` · ${pendientes} pendiente(s) de validar` : ""}
+              </p>
             </div>
           </div>
           <div className="flex items-center gap-3">
@@ -121,6 +141,7 @@ export default function RegistroGeneral() {
                   <th className="px-3 py-3 font-medium">H. despegue</th>
                   <th className="px-3 py-3 font-medium">H. aterrizaje</th>
                   <th className="px-3 py-3 font-medium">Duración / Total</th>
+                  <th className="px-3 py-3 font-medium">Estado</th>
                   <th className="px-3 py-3 font-medium"></th>
                 </tr>
               </thead>
@@ -149,9 +170,32 @@ export default function RegistroGeneral() {
                         <div className="text-xs text-slate-400">Total {v.matricula}: {formatDuration(totals[v.matricula] || 0)}</div>
                       </td>
                       <td className="px-3 py-2.5">
-                        <div className="flex gap-1">
-                          <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => openEdit(v)}><Pencil className="w-3.5 h-3.5" /></Button>
-                          <Button variant="ghost" size="icon" className="h-7 w-7 text-red-600" onClick={() => remove(v.id)}><Trash2 className="w-3.5 h-3.5" /></Button>
+                        {(!v.estado || v.estado === "pendiente") ? (
+                          <Badge className="bg-amber-100 text-amber-700 hover:bg-amber-100">Pendiente</Badge>
+                        ) : v.estado === "validado" ? (
+                          <Badge className="bg-green-100 text-green-700 hover:bg-green-100">Validado</Badge>
+                        ) : (
+                          <Badge className="bg-red-100 text-red-700 hover:bg-red-100">Rechazado</Badge>
+                        )}
+                      </td>
+                      <td className="px-3 py-2.5">
+                        <div className="flex gap-1 no-print">
+                          {isAdminLevel && (!v.estado || v.estado === "pendiente") && (
+                            <>
+                              <Button variant="ghost" size="icon" className="h-7 w-7 text-green-600" disabled={busyId === v.id} onClick={() => handleDecidir(v.id, "validado")} title="Validar">
+                                <Check className="w-3.5 h-3.5" />
+                              </Button>
+                              <Button variant="ghost" size="icon" className="h-7 w-7 text-red-600" disabled={busyId === v.id} onClick={() => handleDecidir(v.id, "rechazado")} title="Rechazar">
+                                <X className="w-3.5 h-3.5" />
+                              </Button>
+                            </>
+                          )}
+                          {canEditVuelo(v) && (
+                            <>
+                              <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => openEdit(v)}><Pencil className="w-3.5 h-3.5" /></Button>
+                              <Button variant="ghost" size="icon" className="h-7 w-7 text-red-600" onClick={() => remove(v.id)}><Trash2 className="w-3.5 h-3.5" /></Button>
+                            </>
+                          )}
                         </div>
                       </td>
                     </motion.tr>
