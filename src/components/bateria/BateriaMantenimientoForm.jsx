@@ -10,7 +10,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 
 import { AlertTriangle } from "lucide-react";
 
-const empty = { bateria_numero: "", tip: "", tipo: "", fecha: "", proxima_fecha: "", observaciones: "", voltaje_celda_1: 0, voltaje_celda_2: 0, voltaje_celda_3: 0, voltaje_celda_4: 0 };
+const empty = { bateria_numero: "", tip: "", tipo: "", fecha: "", proxima_fecha: "", observaciones: "", ciclos: "", voltaje_celda_1: 0, voltaje_celda_2: 0, voltaje_celda_3: 0, voltaje_celda_4: 0 };
 
 export default function BateriaMantenimientoForm({ open, onOpenChange, onSaved, editing, batteryNumber }) {
   const [form, setForm] = useState(empty);
@@ -70,7 +70,10 @@ export default function BateriaMantenimientoForm({ open, onOpenChange, onSaved, 
             <div className="grid gap-2"><Label>TIP (responsable) *</Label><Input value={form.tip} onChange={(e) => set("tip", e.target.value)} /></div>
             <div className="grid gap-2"><Label>Tipo de mantenimiento *</Label><Input value={form.tipo} onChange={(e) => set("tipo", e.target.value)} placeholder="Ej: Revisión, Cambio de celdas..." /></div>
           </div>
-          <div className="grid gap-2"><Label>Próxima revisión</Label><Input type="date" value={form.proxima_fecha} onChange={(e) => set("proxima_fecha", e.target.value)} /></div>
+          <div className="grid grid-cols-2 gap-4">
+            <div className="grid gap-2"><Label>Próxima revisión</Label><Input type="date" value={form.proxima_fecha} onChange={(e) => set("proxima_fecha", e.target.value)} /></div>
+            <div className="grid gap-2"><Label>Ciclos registrados en este mantenimiento</Label><Input type="number" value={form.ciclos} onChange={(e) => set("ciclos", e.target.value === "" ? "" : Number(e.target.value))} placeholder="Ej: 15" /></div>
+          </div>
           <div className="grid gap-2">
             <Label>Voltaje de celdas (V)</Label>
             <div className="grid grid-cols-4 gap-3">
