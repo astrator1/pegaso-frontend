@@ -91,9 +91,12 @@
 
 @media print {
   @page { size: landscape; margin: 0; }
+  @page portrait-print { size: portrait; margin: 0; }
   body * { visibility: hidden !important; }
   #print-area, #print-area * { visibility: visible !important; }
   #print-area { position: absolute; left: 0; top: 0; width: 100%; padding: 1cm !important; box-sizing: border-box; }
+  #print-area.portrait-page { page: portrait-print; }
+  .avoid-break { break-inside: avoid; page-break-inside: avoid; }
   .no-print { display: none !important; }
   .page-break-before { break-before: page; page-break-before: always; }
   .cover-page { min-height: 19cm !important; }
