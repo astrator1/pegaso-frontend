@@ -2,6 +2,7 @@ import db from "@/api/base44Client";
 
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import { Button } from "@/components/ui/button";
+import { naturalCompare } from "@/lib/utils";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 
 const ROW_COUNT = 100;
@@ -148,7 +149,7 @@ export default function VueloBulkForm({ open, onOpenChange, onSaved }) {
           <datalist id="dl-matricula">{aeronaves.map((a) => <option key={a.id} value={a.matricula} />)}</datalist>
           <datalist id="dl-piloto">{pilotos.map((p) => <option key={p.id} value={`${p.nombre} ${p.apellidos || ""}`.trim()} />)}</datalist>
           <datalist id="dl-mision">{misiones.map((m) => <option key={m.id} value={m.nombre} />)}</datalist>
-          <datalist id="dl-bateria">{baterias.filter((b) => b.estado !== "Desechada").sort((a, b) => { const aN = parseInt(a.numero_asignado, 10); const bN = parseInt(b.numero_asignado, 10); if (!isNaN(aN) && !isNaN(bN)) return aN - bN; return (a.numero_asignado || "").localeCompare(b.numero_asignado || ""); }).map((b) => <option key={b.id} value={b.numero_asignado} />)}</datalist>
+          <datalist id="dl-bateria">{baterias.filter((b) => b.estado !== "Desechada").sort((a, b) => naturalCompare(a.numero_asignado, b.numero_asignado)).map((b) => <option key={b.id} value={b.numero_asignado} />)}</datalist>
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>Cancelar</Button>
