@@ -124,6 +124,11 @@ const planVuelo = {
     request(`/api/planes-vuelo/${id}/decidir`, { method: "POST", body: { estado, comentario } }),
 };
 
-const db = { auth, entities, admin, planVuelo };
-export { db, auth, entities, admin, planVuelo };
+const vueloRevision = {
+  decidir: async (id, estado, comentario) =>
+    request(`/api/vuelos/${id}/decidir`, { method: "POST", body: { estado, comentario } }),
+};
+
+const db = { auth, entities, admin, planVuelo, vueloRevision };
+export { db, auth, entities, admin, planVuelo, vueloRevision };
 export default db;
