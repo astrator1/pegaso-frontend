@@ -63,7 +63,9 @@ export default function VueloForm({ open, onOpenChange, onSaved, editing }) {
               <Select value={form.matricula} onValueChange={(v) => set("matricula", v)}>
                 <SelectTrigger><SelectValue placeholder="Selecciona aeronave" /></SelectTrigger>
                 <SelectContent>
-                  {aeronaves.map((a) => <SelectItem key={a.id} value={a.matricula}>{a.matricula}</SelectItem>)}
+                  {[...aeronaves].sort((x, y) => (x.retirada ? 1 : 0) - (y.retirada ? 1 : 0)).map((a) => (
+                    <SelectItem key={a.id} value={a.matricula}>{a.matricula}{a.retirada ? " (retirada)" : ""}</SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>
