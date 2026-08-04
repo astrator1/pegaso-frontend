@@ -4,6 +4,7 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { ArrowLeft, Users, BatteryCharging, FileText, Clock, Plane, CheckCircle2, AlertTriangle } from "lucide-react";
+import { naturalCompare } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 
 import { Drone } from "@/components/DroneIcon";
@@ -94,11 +95,7 @@ export default function PanelEstadistico() {
       const remaining = Math.max(0, 100 - (mins / 60 / 200 * 100));
       return { numero: b.numero_asignado, vida: Math.round(remaining) };
     })
-    .sort((a, b) => {
-      const aN = parseInt(a.numero, 10), bN = parseInt(b.numero, 10);
-      if (!isNaN(aN) && !isNaN(bN)) return aN - bN;
-      return (a.numero || "").localeCompare(b.numero || "");
-    });
+    .sort((a, b) => naturalCompare(a.numero, b.numero));
 
   // --- Baterías con baja vida (< 20%) ---
   const bateriasBajaVida = vidaBaterias.filter((b) => b.vida < 20).length;

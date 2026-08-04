@@ -10,6 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { naturalCompare } from "@/lib/utils";
 
 import { totalHorasBateria, formatDuration } from "@/lib/vuelo";
 import PrintButton from "@/components/PrintButton";
@@ -167,10 +168,10 @@ export default function BateriaGestion() {
       return [b.marca, b.modelo, b.numero_asignado].some((v) => (v || "").toLowerCase().includes(q));
     })
     .sort((a, b) => {
-      if (sortBy === "antiguedad") return (a.fecha_alta || "").localeCompare(b.fecha_alta || "");
-      if (sortBy === "modelo") return (a.modelo || "").localeCompare(b.modelo || "");
+      if (sortBy === "antiguedad") return naturalCompare(a.fecha_alta, b.fecha_alta);
+      if (sortBy === "modelo") return naturalCompare(a.modelo, b.modelo);
       if (sortBy === "horas_vuelo") return totalHorasBateria(vuelos, b.numero_asignado) - totalHorasBateria(vuelos, a.numero_asignado);
-      return (a.numero_asignado || "").localeCompare(b.numero_asignado || "");
+      return naturalCompare(a.numero_asignado, b.numero_asignado);
     });
 
   return (
