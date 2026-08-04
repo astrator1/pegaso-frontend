@@ -86,7 +86,7 @@ export default function VueloForm({ open, onOpenChange, onSaved, editing }) {
                 <SelectTrigger><SelectValue placeholder="Selecciona piloto" /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value={null}>Sin asignar</SelectItem>
-                  {pilotos.map((p) => <SelectItem key={p.id} value={`${p.nombre} ${p.apellidos || ""}`.trim()}>{p.nombre} {p.apellidos}</SelectItem>)}
+                  {pilotos.filter((p) => p.gestionado !== false || `${p.nombre} ${p.apellidos || ""}`.trim() === form.piloto).map((p) => <SelectItem key={p.id} value={`${p.nombre} ${p.apellidos || ""}`.trim()}>{p.nombre} {p.apellidos}</SelectItem>)}
                 </SelectContent>
               </Select>
             </div>
