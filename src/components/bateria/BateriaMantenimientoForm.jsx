@@ -2,6 +2,7 @@ import db from "@/api/base44Client";
 
 import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
+import { naturalCompare } from "@/lib/utils";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -59,7 +60,7 @@ export default function BateriaMantenimientoForm({ open, onOpenChange, onSaved, 
                 <Select value={form.bateria_numero} onValueChange={(v) => set("bateria_numero", v)}>
                   <SelectTrigger><SelectValue placeholder="Selecciona batería" /></SelectTrigger>
                   <SelectContent>
-                    {baterias.sort((a, b) => { const aN = parseInt(a.numero_asignado, 10); const bN = parseInt(b.numero_asignado, 10); if (!isNaN(aN) && !isNaN(bN)) return aN - bN; return (a.numero_asignado || "").localeCompare(b.numero_asignado || ""); }).map((b) => <SelectItem key={b.id} value={b.numero_asignado}>{b.numero_asignado} — {b.marca} {b.modelo}</SelectItem>)}
+                    {baterias.sort((a, b) => naturalCompare(a.numero_asignado, b.numero_asignado)).map((b) => <SelectItem key={b.id} value={b.numero_asignado}>{b.numero_asignado} — {b.marca} {b.modelo}</SelectItem>)}
                   </SelectContent>
                 </Select>
               )}
