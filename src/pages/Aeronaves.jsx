@@ -3,12 +3,13 @@ import db from "@/api/base44Client";
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { ArrowLeft, Trash2, Pencil, Plus, Search, BookOpen, Wrench, Package, Cog } from "lucide-react";
+import { ArrowLeft, Trash2, Pencil, Plus, Search, BookOpen, Wrench, Package, Cog, Ban, History, RotateCcw } from "lucide-react";
 import { Drone } from "@/components/DroneIcon";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 
 import { totalHorasMatricula, formatDuration } from "@/lib/vuelo";
@@ -22,6 +23,8 @@ const empty = {
   operativa: true,
 };
 
+const RET_SUFFIX = "RET";
+
 export default function Aeronaves() {
   const navigate = useNavigate();
   const [items, setItems] = useState([]);
@@ -32,6 +35,9 @@ export default function Aeronaves() {
   const [form, setForm] = useState(empty);
   const [query, setQuery] = useState("");
   const [submenuItem, setSubmenuItem] = useState(null);
+  const [retirando, setRetirando] = useState(null);
+  const [fechaRetirada, setFechaRetirada] = useState("");
+  const [motivoRetirada, setMotivoRetirada] = useState("");
 
   const load = async () => {
     setLoading(true);
@@ -73,7 +79,50 @@ export default function Aeronaves() {
   const remove = async (id) => { await db.entities.Aeronave.delete(id); load(); };
   const set = (k, v) => setForm((f) => ({ ...f, [k]: v }));
 
-  const filtered = items.filter((a) => {
+  const openRetirar = (item) => {
+    setRetirando(item);
+    setFechaRetirada(new Date().toISOString().slice(0, 10));
+    setMotivoRetirada("");
+  };
+
+  const confirmRetirar = async () => {
+    if (!retirando || !fechaRetirada) return;
+    const nuevaMatricula = `${retirando.matricula}${RET_SUFFIX}`;
+    await db.entities.Aeronave.update(retirando.id, {
+      matricula: nuevaMatricula,
+      matricula_original: retirando.matricula,
+      retirada: true,
+      operativa: false,
+      fecha_retirada: fechaRetirada,
+      motivo_retirada: motivoRetirada,
+    });
+    setRetirando(null);
+    setFechaRetirada("");
+    setMotivoRetirada("");
+    load();
+  };
+
+  const recuperar = async (a) => {
+    const original = a.matricula_original;
+    if (!original) return;
+    const enUso = items.some((x) => x.id !== a.id && !x.retirada && x.matricula === original);
+    if (enUso) {
+      alert(`La matrícula ${original} ya está en uso por otra aeronave activa. No se puede recuperar.`);
+      return;
+    }
+    await db.entities.Aeronave.update(a.id, {
+      matricula: original,
+      matricula_original: "",
+      retirada: false,
+      operativa: true,
+      fecha_retirada: "",
+    });
+    load();
+  };
+
+  const activas = items.filter((a) => !a.retirada);
+  const historico = items.filter((a) => a.retirada);
+  const filtered = activas.filter((a) => {
     const q = query.toLowerCase();
     return [a.matricula, a.marca, a.modelo].some((v) => (v || "").toLowerCase().includes(q));
   });
@@ -87,7 +136,7 @@ export default function Aeronaves() {
             <Button variant="ghost" size="icon" onClick={() => navigate("/aeronaves")}><ArrowLeft className="w-5 h-5" /></Button>
             <div>
               <h1 className="text-3xl font-bold text-slate-900">Aeronaves</h1>
-              <p className="text-slate-500">{filtered.length} aeronave(s) registrada(s)</p>
+              <p className="text-slate-500">{filtered.length} aeronave(s) activa(s)</p>
             </div>
           </div>
           <div className="flex items-center gap-3">
@@ -137,14 +186,52 @@ export default function Aeronaves() {
                     <div><span className="text-slate-400 block text-xs">Últ. mantenimiento</span>{it.ultimo_mantenimiento || "—"}</div>
                     <div><span className="text-slate-400 block text-xs">Próx. mantenimiento</span>{it.proximo_mantenimiento || "—"}</div>
                   </div>
-                  <div className="mt-4 flex gap-2">
+                  <div className="mt-4 flex gap-2 flex-wrap">
                     <Button variant="default" size="sm" className="bg-green-800 hover:bg-green-900" onClick={() => setSubmenuItem(it)}>Ver fichas</Button>
                     <Button variant="outline" size="sm" onClick={() => openEdit(it)}><Pencil className="w-3.5 h-3.5 mr-1" /> Editar</Button>
-                    <Button variant="ghost" size="sm" className="text-red-600 hover:text-red-700" onClick={() => remove(it.id)}><Trash2 className="w-3.5 h-3.5 mr-1" /> Eliminar</Button>
+                    <Button variant="ghost" size="sm" className="text-red-600 hover:text-red-700" onClick={() => openRetirar(it)}><Ban className="w-3.5 h-3.5 mr-1" /> Retirar</Button>
                   </div>
                 </motion.div>
               );
             })}
+          </div>
+        )}
+
+        {historico.length > 0 && (
+          <div className="mt-10">
+            <div className="flex items-center gap-2 mb-4">
+              <History className="w-5 h-5 text-slate-500" />
+              <h2 className="text-xl font-semibold text-slate-900">Histórico de aeronaves retiradas</h2>
+            </div>
+            <div className="bg-white rounded-xl border border-slate-200 overflow-hidden overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead className="bg-slate-50 text-slate-500">
+                  <tr>
+                    <th className="text-left px-4 py-3 font-medium">Matrícula (retirada)</th>
+                    <th className="text-left px-4 py-3 font-medium">Matrícula original</th>
+                    <th className="text-left px-4 py-3 font-medium">Marca / Modelo</th>
+                    <th className="text-left px-4 py-3 font-medium">Fecha retirada</th>
+                    <th className="text-left px-4 py-3 font-medium">Motivo</th>
+                    <th className="text-left px-4 py-3 font-medium">Acciones</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100">
+                  {historico.map((a) => (
+                    <tr key={a.id} className="hover:bg-slate-50">
+                      <td className="px-4 py-3 font-mono text-slate-900">{a.matricula}</td>
+                      <td className="px-4 py-3">{a.matricula_original || "—"}</td>
+                      <td className="px-4 py-3">{a.marca} {a.modelo}</td>
+                      <td className="px-4 py-3">{a.fecha_retirada || "—"}</td>
+                      <td className="px-4 py-3">{a.motivo_retirada || "—"}</td>
+                      <td className="px-4 py-3 flex gap-2">
+                        <Button variant="outline" size="sm" onClick={() => openEdit(a)}><Pencil className="w-3.5 h-3.5" /></Button>
+                        <Button variant="outline" size="sm" onClick={() => recuperar(a)}><RotateCcw className="w-3.5 h-3.5 mr-1" /> Recuperar</Button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </div>
         )}
       </div>
@@ -212,6 +299,30 @@ export default function Aeronaves() {
               <span className="text-xs text-slate-500">Cambios y reparaciones</span>
             </button>
           </div>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={!!retirando} onOpenChange={(v) => !v && setRetirando(null)}>
+        <DialogContent>
+          <DialogHeader><DialogTitle>Retirar aeronave</DialogTitle></DialogHeader>
+          <p className="text-slate-600 text-sm">
+            Se va a retirar la aeronave <strong>{retirando?.matricula}</strong> ({retirando?.marca} {retirando?.modelo}).
+            Pasará a tener la matrícula <strong>{retirando?.matricula}{RET_SUFFIX}</strong> para conservar la trazabilidad
+            de los vuelos ya registrados con ella. La matrícula original <strong>{retirando?.matricula}</strong> quedará
+            libre para asignarla a una aeronave nueva si la sustituyes.
+          </p>
+          <div className="grid gap-2">
+            <Label>Fecha de retirada</Label>
+            <Input type="date" value={fechaRetirada} onChange={(e) => setFechaRetirada(e.target.value)} />
+          </div>
+          <div className="grid gap-2">
+            <Label>Motivo</Label>
+            <Textarea rows={2} value={motivoRetirada} onChange={(e) => setMotivoRetirada(e.target.value)} placeholder="Ej: accidente, daño estructural..." />
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setRetirando(null)}>Cancelar</Button>
+            <Button onClick={confirmRetirar} className="bg-red-600 hover:bg-red-700">Retirar</Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>

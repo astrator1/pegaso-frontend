@@ -3,7 +3,7 @@ import db from "@/api/base44Client";
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { ArrowLeft, Activity, FileText } from "lucide-react";
+import { ArrowLeft, Activity } from "lucide-react";
 import { Drone } from "@/components/DroneIcon";
 import { Button } from "@/components/ui/button";
 
@@ -22,7 +22,6 @@ export default function AeronavesPanel() {
 
   const cards = [
   { label: "Estado de Flota", desc: "Resumen del estado de las aeronaves", icon: Activity, path: "/aeronaves/estado", gradient: "from-green-600 to-green-800" },
-  { label: "Registro General", desc: "Listado completo de vuelos", icon: FileText, path: "/aeronaves/registro", gradient: "from-green-600 to-green-800" },
   { label: "Aeronaves", desc: "Gestión de aeronaves (alta/edición)", icon: Drone, path: "/aeronaves/gestion", gradient: "from-green-700 to-green-900" }];
 
   return (
@@ -36,7 +35,7 @@ export default function AeronavesPanel() {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {cards.map((c, i) => {
             const Icon = c.icon;
             return (

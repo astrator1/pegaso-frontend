@@ -7,6 +7,7 @@ import { ArrowLeft, Plus, BatteryCharging, Pencil, Search, Ban, ArrowRight, Hist
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 
@@ -14,7 +15,14 @@ import { totalHorasBateria, formatDuration } from "@/lib/vuelo";
 import PrintButton from "@/components/PrintButton";
 import PrintHeader from "@/components/PrintHeader";
 
-const empty = { marca: "", modelo: "", numero_serie: "", fecha_alta: "", ciclos_carga: 0, numero_asignado: "", estado: "Nueva" };
+const empty = { marca: "", modelo: "", numero_serie: "", fecha_alta: "", ciclos_carga: 0, ciclos_iniciales: 0, numero_asignado: "", estado: "Nueva", observaciones: "" };
+const MOTIVOS_RETIRADA = ["Fallo de lectura", "Hinchada", "Fin de vida útil", "Daño físico", "Otro"];
+const SORT_OPTIONS = [
+  { value: "numero_asignado", label: "Número asignado" },
+  { value: "antiguedad", label: "Antigüedad (fecha de alta)" },
+  { value: "horas_vuelo", label: "Horas de vuelo" },
+  { value: "modelo", label: "Modelo" },
+];
 
 export default function BateriaGestion() {
   const navigate = useNavigate();
@@ -26,8 +34,11 @@ export default function BateriaGestion() {
   const [editing, setEditing] = useState(null);
   const [form, setForm] = useState(empty);
   const [query, setQuery] = useState("");
+  const [sortBy, setSortBy] = useState("numero_asignado");
   const [descartando, setDescartando] = useState(null);
   const [fechaBaja, setFechaBaja] = useState("");
+  const [motivoRetirada, setMotivoRetirada] = useState(MOTIVOS_RETIRADA[0]);
+  const [motivoDetalle, setMotivoDetalle] = useState("");
 
   const load = async () => {
     setLoading(true);
@@ -51,8 +62,8 @@ export default function BateriaGestion() {
     setEditing(item);
     setForm({
       marca: item.marca || "", modelo: item.modelo || "", numero_serie: item.numero_serie || "",
-      fecha_alta: item.fecha_alta || "", ciclos_carga: item.ciclos_carga || 0,
-      numero_asignado: item.numero_asignado || "", estado: item.estado || "Nueva",
+      fecha_alta: item.fecha_alta || "", ciclos_carga: item.ciclos_carga || 0, ciclos_iniciales: item.ciclos_iniciales || 0,
+      numero_asignado: item.numero_asignado || "", estado: item.estado || "Nueva", observaciones: item.observaciones || "",
     });
     setOpen(true);
   };
@@ -70,6 +81,8 @@ export default function BateriaGestion() {
   const openDescartar = (item) => {
     setDescartando(item);
     setFechaBaja(new Date().toISOString().slice(0, 10));
+    setMotivoRetirada(MOTIVOS_RETIRADA[0]);
+    setMotivoDetalle("");
   };
 
   const confirmDescarte = async () => {
@@ -90,9 +103,12 @@ export default function BateriaGestion() {
       fecha_baja: fechaBaja,
       numero_historico: numHist,
       numero_asignado: "",
+      motivo_retirada: motivoRetirada,
+      motivo_retirada_detalle: motivoRetirada === "Otro" ? motivoDetalle : "",
     });
     setDescartando(null);
     setFechaBaja("");
+    setMotivoDetalle("");
     load();
   };
 
@@ -145,10 +161,17 @@ export default function BateriaGestion() {
 
   const activas = items.filter((b) => b.estado !== "Desechada");
   const historico = items.filter((b) => b.estado === "Desechada");
-  const filtered = activas.filter((b) => {
-    const q = query.toLowerCase();
-    return [b.marca, b.modelo, b.numero_asignado].some((v) => (v || "").toLowerCase().includes(q));
-  });
+  const filtered = activas
+    .filter((b) => {
+      const q = query.toLowerCase();
+      return [b.marca, b.modelo, b.numero_asignado].some((v) => (v || "").toLowerCase().includes(q));
+    })
+    .sort((a, b) => {
+      if (sortBy === "antiguedad") return (a.fecha_alta || "").localeCompare(b.fecha_alta || "");
+      if (sortBy === "modelo") return (a.modelo || "").localeCompare(b.modelo || "");
+      if (sortBy === "horas_vuelo") return totalHorasBateria(vuelos, b.numero_asignado) - totalHorasBateria(vuelos, a.numero_asignado);
+      return (a.numero_asignado || "").localeCompare(b.numero_asignado || "");
+    });
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-100">
@@ -162,11 +185,17 @@ export default function BateriaGestion() {
               <p className="text-slate-500">{filtered.length} batería(s) activa(s)</p>
             </div>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3 flex-wrap">
             <div className="relative w-full sm:w-56">
               <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
               <Input className="pl-9" placeholder="Buscar..." value={query} onChange={(e) => setQuery(e.target.value)} />
             </div>
+            <Select value={sortBy} onValueChange={setSortBy}>
+              <SelectTrigger className="w-full sm:w-52"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                {SORT_OPTIONS.map((o) => <SelectItem key={o.value} value={o.value}>Ordenar: {o.label}</SelectItem>)}
+              </SelectContent>
+            </Select>
             <Button onClick={openNew} className="bg-green-800 hover:bg-green-900"><Plus className="w-4 h-4 mr-1" /> Nueva</Button>
             <PrintButton />
           </div>
@@ -257,6 +286,7 @@ export default function BateriaGestion() {
                     <th className="text-left px-4 py-3 font-medium">Nº asignado</th>
                     <th className="text-left px-4 py-3 font-medium">Marca / Modelo</th>
                     <th className="text-left px-4 py-3 font-medium">Fecha baja</th>
+                    <th className="text-left px-4 py-3 font-medium">Motivo</th>
                     <th className="text-left px-4 py-3 font-medium">Acciones</th>
                   </tr>
                 </thead>
@@ -267,7 +297,9 @@ export default function BateriaGestion() {
                       <td className="px-4 py-3">{b.numero_asignado || "—"}</td>
                       <td className="px-4 py-3">{b.marca} {b.modelo}</td>
                       <td className="px-4 py-3">{b.fecha_baja || "—"}</td>
-                      <td className="px-4 py-3">
+                      <td className="px-4 py-3">{b.motivo_retirada || "—"}{b.motivo_retirada === "Otro" && b.motivo_retirada_detalle ? `: ${b.motivo_retirada_detalle}` : ""}</td>
+                      <td className="px-4 py-3 flex gap-2">
+                        <Button variant="outline" size="sm" onClick={() => openEdit(b)}><Pencil className="w-3.5 h-3.5" /></Button>
                         <Button variant="outline" size="sm" onClick={() => recuperar(b)}><RotateCcw className="w-3.5 h-3.5 mr-1" /> Recuperar</Button>
                       </td>
                     </tr>
@@ -294,6 +326,14 @@ export default function BateriaGestion() {
             <div className="grid grid-cols-2 gap-4">
               <div className="grid gap-2"><Label>Fecha de alta</Label><Input type="date" value={form.fecha_alta} onChange={(e) => set("fecha_alta", e.target.value)} /></div>
               <div className="grid gap-2"><Label>Ciclos de carga</Label><Input type="number" value={form.ciclos_carga} onChange={(e) => set("ciclos_carga", Number(e.target.value))} /></div>
+            </div>
+            <div className="grid gap-2">
+              <Label>Ciclos iniciales <span className="text-slate-400 font-normal">(si es remanufacturada, pon aquí los ciclos con los que entra)</span></Label>
+              <Input type="number" value={form.ciclos_iniciales} onChange={(e) => set("ciclos_iniciales", Number(e.target.value))} />
+            </div>
+            <div className="grid gap-2">
+              <Label>Observaciones</Label>
+              <Textarea rows={2} value={form.observaciones} onChange={(e) => set("observaciones", e.target.value)} placeholder="Ej: batería remanufacturada..." />
             </div>
             <div className="grid gap-2"><Label>Estado</Label>
               <Select value={form.estado} onValueChange={(v) => set("estado", v)}>
@@ -322,6 +362,21 @@ export default function BateriaGestion() {
             <Label>Fecha de baja</Label>
             <Input type="date" value={fechaBaja} onChange={(e) => setFechaBaja(e.target.value)} />
           </div>
+          <div className="grid gap-2">
+            <Label>Motivo de retirada</Label>
+            <Select value={motivoRetirada} onValueChange={setMotivoRetirada}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>
+                {MOTIVOS_RETIRADA.map((m) => <SelectItem key={m} value={m}>{m}</SelectItem>)}
+              </SelectContent>
+            </Select>
+          </div>
+          {motivoRetirada === "Otro" && (
+            <div className="grid gap-2">
+              <Label>Detalle del motivo</Label>
+              <Textarea rows={2} value={motivoDetalle} onChange={(e) => setMotivoDetalle(e.target.value)} placeholder="Describe el motivo..." />
+            </div>
+          )}
           {descartando && fechaBaja && (
             <p className="text-sm text-slate-500 bg-slate-50 rounded-lg p-3">Número histórico generado: <span className="font-mono font-semibold text-slate-900">{descartando.numero_asignado}R{fechaBaja.slice(2,4)}{fechaBaja.slice(5,7)}{fechaBaja.slice(8,10)}</span></p>
           )}

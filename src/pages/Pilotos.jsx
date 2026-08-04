@@ -3,7 +3,7 @@ import db from "@/api/base44Client";
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { ArrowLeft, Plus, Users, Trash2, Pencil, CheckCircle2, XCircle } from "lucide-react";
+import { ArrowLeft, Plus, Users, Trash2, Pencil, CheckCircle2, XCircle, History } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -19,7 +19,7 @@ const empty = {
   teorico_apto: false, teorico_fecha: "",
   practico_apto: false, practico_fecha: "",
   radiofonista_apto: false, radiofonista_fecha: "",
-  observaciones: "", ok: false,
+  observaciones: "", ok: false, gestionado: true,
 };
 
 function AptoField({ label, apto, fecha, onApto, onFecha }) {
@@ -67,7 +67,7 @@ export default function Pilotos() {
       teorico_apto: !!item.teorico_apto, teorico_fecha: item.teorico_fecha || "",
       practico_apto: !!item.practico_apto, practico_fecha: item.practico_fecha || "",
       radiofonista_apto: !!item.radiofonista_apto, radiofonista_fecha: item.radiofonista_fecha || "",
-      observaciones: item.observaciones || "", ok: !!item.ok,
+      observaciones: item.observaciones || "", ok: !!item.ok, gestionado: item.gestionado !== false,
     });
     setOpen(true);
   };
@@ -83,6 +83,9 @@ export default function Pilotos() {
   const remove = async (id) => { await db.entities.Piloto.delete(id); load(); };
   const set = (k, v) => setForm((f) => ({ ...f, [k]: v }));
 
+  const activos = items.filter((p) => p.gestionado !== false);
+  const historico = items.filter((p) => p.gestionado === false);
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-100">
       <div className="max-w-6xl mx-auto px-6 py-10" id="print-area">
@@ -92,7 +95,7 @@ export default function Pilotos() {
             <Button variant="ghost" size="icon" onClick={() => navigate("/")}><ArrowLeft className="w-5 h-5" /></Button>
             <div>
               <h1 className="text-3xl font-bold text-slate-900">Pilotos</h1>
-              <p className="text-slate-500">{items.length} piloto(s) registrado(s)</p>
+              <p className="text-slate-500">{activos.length} piloto(s) gestionado(s)</p>
             </div>
           </div>
           <Button onClick={openNew} className="bg-blue-600 hover:bg-blue-700"><Plus className="w-4 h-4 mr-1" /> Nuevo piloto</Button>
@@ -101,14 +104,14 @@ export default function Pilotos() {
 
         {loading ? (
           <div className="text-center py-20 text-slate-400">Cargando...</div>
-        ) : items.length === 0 ? (
+        ) : activos.length === 0 ? (
           <div className="text-center py-20">
             <Users className="w-12 h-12 mx-auto text-slate-300 mb-4" />
-            <p className="text-slate-500">No hay pilotos registrados todavía.</p>
+            <p className="text-slate-500">No hay pilotos gestionados todavía.</p>
           </div>
         ) : (
           <div className="grid gap-4">
-            {items.map((it, i) => (
+            {activos.map((it, i) => (
               <motion.div
                 key={it.id}
                 initial={{ opacity: 0, y: 12 }}
@@ -170,6 +173,34 @@ export default function Pilotos() {
             ))}
           </div>
         )}
+
+        {historico.length > 0 && (
+          <div className="mt-10">
+            <div className="flex items-center gap-2 mb-4">
+              <History className="w-5 h-5 text-slate-500" />
+              <h2 className="text-xl font-semibold text-slate-900">Histórico de pilotos (no gestionados por la unidad)</h2>
+            </div>
+            <div className="grid gap-4">
+              {historico.map((it) => (
+                <div key={it.id} className="bg-white rounded-xl border border-slate-200 p-5 opacity-80">
+                  <div className="flex flex-wrap items-center justify-between gap-4">
+                    <div className="flex items-center gap-4">
+                      <div className="w-12 h-12 rounded-lg bg-slate-100 flex items-center justify-center"><Users className="w-6 h-6 text-slate-400" /></div>
+                      <div>
+                        <h3 className="font-semibold text-lg text-slate-900">{it.nombre} {it.apellidos}</h3>
+                        <p className="text-sm text-slate-500">DNI: {it.dni || "—"} {it.unidad ? `· Unidad: ${it.unidad}` : ""}</p>
+                      </div>
+                    </div>
+                    <div className="flex gap-2">
+                      <Button variant="outline" size="sm" onClick={() => openEdit(it)}><Pencil className="w-3.5 h-3.5 mr-1" /> Editar</Button>
+                      <Button variant="ghost" size="sm" className="text-red-600 hover:text-red-700" onClick={() => remove(it.id)}><Trash2 className="w-3.5 h-3.5 mr-1" /> Eliminar</Button>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
 
       <Dialog open={open} onOpenChange={setOpen}>
@@ -195,6 +226,13 @@ export default function Pilotos() {
             <div className="grid gap-2">
               <Label>Observaciones</Label>
               <Textarea rows={3} value={form.observaciones} onChange={(e) => set("observaciones", e.target.value)} />
+            </div>
+
+            <div className="flex items-center gap-3 rounded-lg border border-slate-200 p-3">
+              <Checkbox checked={form.gestionado} onCheckedChange={(v) => set("gestionado", !!v)} id="gestionado-check" />
+              <Label htmlFor="gestionado-check" className="text-sm font-medium cursor-pointer">
+                Gestionado por nuestra unidad <span className="text-slate-400 font-normal">(desmárcalo si es de otra unidad y solo lo registras por un vuelo puntual)</span>
+              </Label>
             </div>
 
             <div className="flex items-center gap-3 rounded-lg border border-slate-200 p-3">

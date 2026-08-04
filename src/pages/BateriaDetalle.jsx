@@ -41,6 +41,9 @@ export default function BateriaDetalle() {
   const horas = bateria ? totalHorasBateria(vuelos, bateria.numero_asignado) : 0;
   const usos = bateria ? vuelos.filter((v) => v.bateria === bateria.numero_asignado).length : 0;
   const ultimo = mantenimientos[0];
+  const ciclosAcumulados = mantenimientos.reduce((sum, m) => sum + (Number(m.ciclos) || 0), 0);
+  const ciclosIniciales = bateria?.ciclos_iniciales || 0;
+  const ciclosTotales = ciclosIniciales + ciclosAcumulados;
 
   const celdas = ultimo ? [ultimo.voltaje_celda_1, ultimo.voltaje_celda_2, ultimo.voltaje_celda_3, ultimo.voltaje_celda_4].filter((v) => v != null && !isNaN(v)) : [];
   const celdaDiff = celdas.length >= 2 ? Math.max(...celdas) - Math.min(...celdas) : 0;
@@ -75,8 +78,9 @@ export default function BateriaDetalle() {
             <p className="text-sm text-slate-500 mt-1">{usos} vuelo(s)</p>
           </div>
           <div className="bg-white rounded-xl border border-slate-200 p-5">
-            <p className="text-xs text-slate-400 mb-1">Ciclos de carga</p>
-            <p className="text-2xl font-bold text-slate-900">{bateria.ciclos_carga ?? 0}</p>
+            <p className="text-xs text-slate-400 mb-1">Ciclos totales</p>
+            <p className="text-2xl font-bold text-slate-900">{ciclosTotales}</p>
+            <p className="text-sm text-slate-500 mt-1">Iniciales: {ciclosIniciales} + Mantenimientos: {ciclosAcumulados}</p>
           </div>
           <div className={`bg-white rounded-xl border p-5 ${celdaAlerta ? "border-red-300 bg-red-50" : "border-slate-200"}`}>
             <p className="text-xs text-slate-400 mb-1">Voltaje de celdas {ultimo ? `(últ. mant. ${ultimo.fecha})` : ""}</p>
@@ -133,7 +137,7 @@ export default function BateriaDetalle() {
                   <div className="flex justify-between items-start">
                     <div>
                       <p className="font-semibold text-slate-900">{m.tipo}</p>
-                      <p className="text-sm text-slate-500">{m.fecha} · TIP: {m.tip}{m.proxima_fecha ? ` · Próxima: ${m.proxima_fecha}` : ""}</p>
+                      <p className="text-sm text-slate-500">{m.fecha} · TIP: {m.tip}{m.proxima_fecha ? ` · Próxima: ${m.proxima_fecha}` : ""}{m.ciclos !== undefined && m.ciclos !== "" ? ` · Ciclos: +${m.ciclos}` : ""}</p>
                       {m.observaciones && <p className="text-sm text-slate-600 mt-1">{m.observaciones}</p>}
                     </div>
                     <div className="flex items-center gap-2">

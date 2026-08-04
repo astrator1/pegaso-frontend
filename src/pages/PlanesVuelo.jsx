@@ -61,7 +61,7 @@ export default function PlanesVuelo() {
       <div className="max-w-3xl mx-auto px-6 py-10">
         <div className="flex items-center justify-between mb-8">
           <div className="flex items-center gap-4">
-            <Button variant="ghost" size="icon" onClick={() => navigate("/")}><ArrowLeft className="w-5 h-5" /></Button>
+            <Button variant="ghost" size="icon" onClick={() => navigate("/operaciones")}><ArrowLeft className="w-5 h-5" /></Button>
             <div>
               <h1 className="text-3xl font-bold text-slate-900">Planes de Vuelo Operacional</h1>
               <p className="text-slate-500">{isAdminLevel ? "Revisa y autoriza los planes de la unidad" : "Tus planes de vuelo"}</p>

@@ -306,7 +306,9 @@ export default function PlanVueloForm() {
                 <Select disabled={!editable} value={form.uas_previsto_id} onValueChange={(v) => set("uas_previsto_id", v)}>
                   <SelectTrigger><SelectValue placeholder="Selecciona aeronave" /></SelectTrigger>
                   <SelectContent>
-                    {aeronaves.map((a) => <SelectItem key={a.id} value={a.id}>{a.marca} {a.modelo} ({a.matricula})</SelectItem>)}
+                    {[...aeronaves].sort((x, y) => (x.retirada ? 1 : 0) - (y.retirada ? 1 : 0)).map((a) => (
+                      <SelectItem key={a.id} value={a.id}>{a.marca} {a.modelo} ({a.matricula}){a.retirada ? " (retirada)" : ""}</SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>

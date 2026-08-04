@@ -13,12 +13,10 @@ import VueloForm from "@/components/vuelos/VueloForm";
 import VueloBulkForm from "@/components/vuelos/VueloBulkForm";
 import PrintButton from "@/components/PrintButton";
 import PrintHeader from "@/components/PrintHeader";
-import { useAuth } from "@/lib/AuthContext";
 
 export default function RegistroGeneral() {
   const navigate = useNavigate();
-  const { user } = useAuth();
-  const backTo = user?.role === "user" ? "/" : "/aeronaves";
+  const backTo = "/operaciones";
   const [vuelos, setVuelos] = useState([]);
   const [loading, setLoading] = useState(true);
   const [open, setOpen] = useState(false);
@@ -30,7 +28,7 @@ export default function RegistroGeneral() {
   const load = async () => {
     setLoading(true);
     try {
-      const data = await db.entities.Vuelo.list("-created_date", 200);
+      const data = await db.entities.Vuelo.list("-created_date", 5000);
       setVuelos(data);
     } catch (e) { /* ignore */ }
     finally { setLoading(false); }
