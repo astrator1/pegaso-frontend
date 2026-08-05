@@ -32,6 +32,19 @@ export default function BateriaMantenimientoForm({ open, onOpenChange, onSaved, 
 
   const set = (k, v) => setForm((f) => ({ ...f, [k]: v }));
 
+  useEffect(() => {
+    if (editing || !form.bateria_numero) return; // solo autorrellenamos en registros nuevos
+    (async () => {
+      try {
+        const historial = await db.entities.BateriaMantenimiento.filter({ bateria_numero: form.bateria_numero });
+        const conCiclos = historial.filter((m) => m.ciclos !== undefined && m.ciclos !== "" && m.ciclos !== null);
+        if (conCiclos.length === 0) return;
+        const ultimo = [...conCiclos].sort((a, b) => (b.fecha || "").localeCompare(a.fecha || ""))[0];
+        setForm((f) => (f.ciclos === "" ? { ...f, ciclos: ultimo.ciclos } : f));
+      } catch (e) { /* ignore */ }
+    })();
+  }, [form.bateria_numero, editing]);
+
   const voltajes = [form.voltaje_celda_1, form.voltaje_celda_2, form.voltaje_celda_3, form.voltaje_celda_4].map(Number);
   const maxV = Math.max(...voltajes);
   const minV = Math.min(...voltajes);
