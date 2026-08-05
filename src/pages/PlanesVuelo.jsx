@@ -49,7 +49,7 @@ export default function PlanesVuelo() {
         <p className="font-medium text-slate-900">{p.titulo || "Sin título"}</p>
         <p className="text-sm text-slate-500">
           {p.fecha_prevista || "Sin fecha"} {p.hora_prevista ? `· ${p.hora_prevista}` : ""}
-          {isAdminLevel && p.created_by_email ? ` · ${p.created_by_email}` : ""}
+          {isAdminLevel && (p.created_by_name || p.created_by_email) ? ` · ${p.created_by_name || p.created_by_email}` : ""}
         </p>
       </div>
       <EstadoBadge estado={p.estado} />

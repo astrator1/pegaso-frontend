@@ -20,7 +20,7 @@ const empty = {
   matricula: "", marca: "", modelo: "", numero_serie: "", callsign: "",
   fecha_adjudicacion: "", horas_vuelo: 0,
   ultimo_mantenimiento: "", proximo_mantenimiento: "",
-  operativa: true,
+  operativa: true, observaciones: "",
 };
 
 const RET_SUFFIX = "RET";
@@ -63,7 +63,7 @@ export default function Aeronaves() {
       horas_vuelo: item.horas_vuelo || 0,
       ultimo_mantenimiento: item.ultimo_mantenimiento || "",
       proximo_mantenimiento: item.proximo_mantenimiento || "",
-      operativa: item.operativa !== false,
+      operativa: item.operativa !== false, observaciones: item.observaciones || "",
     });
     setOpen(true);
   };
@@ -186,6 +186,9 @@ export default function Aeronaves() {
                     <div><span className="text-slate-400 block text-xs">Últ. mantenimiento</span>{it.ultimo_mantenimiento || "—"}</div>
                     <div><span className="text-slate-400 block text-xs">Próx. mantenimiento</span>{it.proximo_mantenimiento || "—"}</div>
                   </div>
+                  {it.observaciones && (
+                    <p className="mt-3 text-sm text-slate-600 bg-slate-50 rounded-lg p-2">{it.observaciones}</p>
+                  )}
                   <div className="mt-4 flex gap-2 flex-wrap">
                     <Button variant="default" size="sm" className="bg-green-800 hover:bg-green-900" onClick={() => setSubmenuItem(it)}>Ver fichas</Button>
                     <Button variant="outline" size="sm" onClick={() => openEdit(it)}><Pencil className="w-3.5 h-3.5 mr-1" /> Editar</Button>
@@ -255,6 +258,10 @@ export default function Aeronaves() {
               <div className="grid gap-2"><Label>Próximo mantenimiento</Label><Input type="date" value={form.proximo_mantenimiento} onChange={(e) => set("proximo_mantenimiento", e.target.value)} /></div>
             </div>
             <div className="text-sm text-slate-400 -mt-1">Las horas de vuelo se calculan automáticamente desde el Registro General.</div>
+            <div className="grid gap-2">
+              <Label>Observaciones</Label>
+              <Textarea rows={2} value={form.observaciones} onChange={(e) => set("observaciones", e.target.value)} placeholder="Notas sobre esta aeronave..." />
+            </div>
             <div className="flex items-center gap-3 rounded-lg border border-slate-200 p-3">
               <Checkbox id="op-check" checked={form.operativa} onCheckedChange={(v) => set("operativa", !!v)} />
               <Label htmlFor="op-check" className="text-sm font-medium cursor-pointer">Operativa (Sí)</Label>

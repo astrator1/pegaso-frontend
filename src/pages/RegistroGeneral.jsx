@@ -11,6 +11,7 @@ import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/lib/AuthContext";
 
 import { flightDuration, formatDuration } from "@/lib/vuelo";
+import { naturalCompare } from "@/lib/utils";
 import VueloForm from "@/components/vuelos/VueloForm";
 import VueloBulkForm from "@/components/vuelos/VueloBulkForm";
 import PrintButton from "@/components/PrintButton";
@@ -46,12 +47,37 @@ export default function RegistroGeneral() {
     totals[v.matricula] = (totals[v.matricula] || 0) + flightDuration(v.hora_despegue, v.hora_aterrizaje);
   });
 
+  // Total acumulado por aeronave hasta la fecha de cada vuelo (en orden cronológico,
+  // independientemente del orden en que se estén mostrando las filas en la tabla).
+  const cumulativeById = {};
+  {
+    const runningByAircraft = {};
+    [...vuelos]
+      .sort((a, b) => naturalCompare(a.fecha, b.fecha) || naturalCompare(a.hora_despegue, b.hora_despegue))
+      .forEach((v) => {
+        const dur = flightDuration(v.hora_despegue, v.hora_aterrizaje);
+        runningByAircraft[v.matricula] = (runningByAircraft[v.matricula] || 0) + dur;
+        cumulativeById[v.id] = runningByAircraft[v.matricula];
+      });
+  }
+
   const filtered = vuelos.filter((v) => {
     const q = query.toLowerCase();
     return [v.matricula, v.piloto, v.mision, v.bateria].some((x) => (x || "").toLowerCase().includes(q));
   });
 
-  const remove = async (id) => { await db.entities.Vuelo.delete(id); load(); };
+  const remove = async (id) => {
+    try {
+      await db.entities.Vuelo.delete(id);
+      load();
+    } catch (err) {
+      if (err.status === 403) {
+        window.alert("Este vuelo ya ha sido validado y no se puede eliminar. Solo los vuelos pendientes de validar se pueden borrar.");
+      } else {
+        window.alert(err.message || "No se pudo eliminar el vuelo.");
+      }
+    }
+  };
   const openNew = () => { setEditing(null); setOpen(true); };
   const openEdit = (v) => { setEditing(v); setOpen(true); };
   const canEditVuelo = (v) => isAdminLevel || !v.estado || v.estado === "pendiente";
@@ -70,8 +96,15 @@ export default function RegistroGeneral() {
   const toggleSelected = (id) => setSelected((s) => s.includes(id) ? s.filter((x) => x !== id) : [...s, id]);
   const toggleAll = () => setSelected(selected.length === filtered.length && filtered.length > 0 ? [] : filtered.map((v) => v.id));
   const bulkDelete = async () => {
-    for (const id of selected) { try { await db.entities.Vuelo.delete(id); } catch (e) { } }
+    if (!window.confirm(`¿Eliminar ${selected.length} vuelo(s) seleccionado(s)? Los que ya estén validados no se podrán borrar.`)) return;
+    let blocked = 0;
+    for (const id of selected) {
+      try { await db.entities.Vuelo.delete(id); } catch (e) { blocked++; }
+    }
     setSelected([]); load();
+    if (blocked > 0) {
+      window.alert(`${blocked} vuelo(s) no se pudieron eliminar por estar ya validados.`);
+    }
   };
   const bulkValidar = async (ids) => {
     setBusyId("bulk");
@@ -189,7 +222,7 @@ export default function RegistroGeneral() {
                       <td className="px-3 py-2.5 text-slate-600">{v.hora_aterrizaje || "—"}</td>
                       <td className="px-3 py-2.5">
                         <div className="font-medium text-slate-900">{formatDuration(dur)}</div>
-                        <div className="text-xs text-slate-400">Total {v.matricula}: {formatDuration(totals[v.matricula] || 0)}</div>
+                        <div className="text-xs text-slate-400">Acumulado {v.matricula}: {formatDuration(cumulativeById[v.id] || 0)}</div>
                       </td>
                       <td className="px-3 py-2.5">
                         {(!v.estado || v.estado === "pendiente") ? (

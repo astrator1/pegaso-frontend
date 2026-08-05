@@ -42,7 +42,12 @@ export default function PanelEstadistico() {
 
   if (loading) return <div className="min-h-screen flex items-center justify-center text-slate-400">Cargando...</div>;
 
-  const { aeronaves, pilotos, baterias, vuelos } = data;
+  const { aeronaves: aeronavesAll, pilotos: pilotosAll, baterias, vuelos } = data;
+  // Los desgloses por piloto/aeronave solo cuentan los gestionados por la unidad / activos.
+  // Los totales globales (horas de vuelo, nº de vuelos) SÍ incluyen todo lo realizado con
+  // cualquier aeronave, también las ya retiradas.
+  const pilotos = pilotosAll.filter((p) => p.gestionado !== false);
+  const aeronaves = aeronavesAll.filter((a) => !a.retirada);
 
   // --- KPIs ---
   const operativas = aeronaves.filter((a) => a.operativa !== false).length;

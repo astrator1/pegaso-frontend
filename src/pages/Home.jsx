@@ -26,7 +26,7 @@ export default function Home() {
         db.entities.Bateria.list(),
         db.entities.Mision.list()]
         );
-        setCounts({ pilotos: p.length, aeronaves: a.filter((x) => !x.retirada).length, baterias: b.filter((x) => x.estado !== "Desechada").length, misiones: m.length });
+        setCounts({ pilotos: p.filter((x) => x.gestionado !== false).length, aeronaves: a.filter((x) => !x.retirada).length, baterias: b.filter((x) => x.estado !== "Desechada").length, misiones: m.length });
       } catch (e) {
 
         // ignore load errors
