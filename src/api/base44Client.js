@@ -99,6 +99,7 @@ const ENTITY_NAMES = [
   "Aeronave",
   "Bateria",
   "BateriaMantenimiento",
+  "IncidenciaDescartada",
   "Mantenimiento",
   "Material",
   "Mision",
@@ -129,6 +130,11 @@ const vueloRevision = {
     request(`/api/vuelos/${id}/decidir`, { method: "POST", body: { estado, comentario } }),
 };
 
-const db = { auth, entities, admin, planVuelo, vueloRevision };
-export { db, auth, entities, admin, planVuelo, vueloRevision };
+const incidencias = {
+  descartar: async (item) => request(`/api/incidencias/descartar`, { method: "POST", body: item }),
+  descartarTodas: async (items) => request(`/api/incidencias/descartar-todas`, { method: "POST", body: { items } }),
+};
+
+const db = { auth, entities, admin, planVuelo, vueloRevision, incidencias };
+export { db, auth, entities, admin, planVuelo, vueloRevision, incidencias };
 export default db;
