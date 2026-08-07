@@ -162,9 +162,11 @@ export default function AdminUsuarios() {
                             <Button size="sm" disabled={busyId === u.id} onClick={() => handleApprove(u.id)}>
                               <Check className="w-4 h-4 mr-1" /> Aprobar
                             </Button>
-                            <Button size="sm" variant="outline" disabled={busyId === u.id} onClick={() => handleDelete(u.id)}>
-                              <Trash2 className="w-4 h-4" />
-                            </Button>
+                            {isSuperadmin && (
+                              <Button size="sm" variant="outline" disabled={busyId === u.id} onClick={() => handleDelete(u.id)}>
+                                <Trash2 className="w-4 h-4" />
+                              </Button>
+                            )}
                           </TableCell>
                         </TableRow>
                       ))}
@@ -219,12 +221,12 @@ export default function AdminUsuarios() {
                             )}
                           </TableCell>
                           <TableCell className="text-right space-x-2">
-                            {!isSelf && !isTargetSuperadmin && (
+                            {isSuperadmin && !isSelf && !isTargetSuperadmin && (
                               <Button size="sm" variant="outline" disabled={busyId === u.id} onClick={() => handleResetPassword(u.id, u.email)}>
                                 <KeyRound className="w-4 h-4" />
                               </Button>
                             )}
-                            {!isSelf && !isTargetSuperadmin && (
+                            {isSuperadmin && !isSelf && !isTargetSuperadmin && (
                               <Button size="sm" variant="outline" disabled={busyId === u.id} onClick={() => handleDelete(u.id)}>
                                 <Trash2 className="w-4 h-4" />
                               </Button>
@@ -238,7 +240,7 @@ export default function AdminUsuarios() {
               </div>
               {!isSuperadmin && (
                 <p className="text-xs text-slate-400 mt-3">
-                  Solo el superusuario puede cambiar el rol de otras cuentas.
+                  Solo el superusuario puede cambiar el rol, resetear la contraseña o eliminar otras cuentas.
                 </p>
               )}
             </section>
