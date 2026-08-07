@@ -3,9 +3,10 @@ import db from "@/api/base44Client";
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Users, BatteryCharging, LogOut, ShieldCheck, KeyRound, BarChart3, Target, ClipboardList } from "lucide-react";
+import { Users, BatteryCharging, LogOut, ShieldCheck, KeyRound, BarChart3, Target, ClipboardList, AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/lib/AuthContext";
+import { computeIncidencias } from "@/lib/incidencias";
 
 import { Drone } from "@/components/DroneIcon";
 
@@ -15,6 +16,27 @@ export default function Home() {
   const isRestrictedUser = user?.role === "user";
   const [counts, setCounts] = useState({ pilotos: null, aeronaves: null, baterias: null, misiones: null });
   const [planesPendientes, setPlanesPendientes] = useState(null);
+  const [incidenciasCount, setIncidenciasCount] = useState({ Aeronave: 0, Bateria: 0 });
+
+  React.useEffect(() => {
+    if (!(user?.role === "admin" || user?.role === "superadmin")) return;
+    (async () => {
+      try {
+        const [aeronaves, baterias, mantenimientos, descartadas] = await Promise.all([
+          db.entities.Aeronave.list(),
+          db.entities.Bateria.list(),
+          db.entities.BateriaMantenimiento.list(),
+          db.entities.IncidenciaDescartada.list(),
+        ]);
+        const descartadasClaves = new Set(descartadas.map((d) => d.clave));
+        const activas = computeIncidencias(aeronaves, baterias, mantenimientos).filter((i) => !descartadasClaves.has(i.clave));
+        setIncidenciasCount({
+          Aeronave: activas.filter((i) => i.tipo === "Aeronave").length,
+          Bateria: activas.filter((i) => i.tipo === "Batería").length,
+        });
+      } catch (e) { /* ignore */ }
+    })();
+  }, [user]);
 
   React.useEffect(() => {
     if (isRestrictedUser) return; // un piloto no necesita estos totales, solo accede a "Grabar vuelo"
@@ -46,15 +68,21 @@ export default function Home() {
 
   const cards = isRestrictedUser ?
   [{ key: "operaciones", label: "Operaciones", desc: "Registrar vuelo y Plan de Vuelo Operacional", icon: ClipboardList, count: null, path: "/operaciones", gradient: "from-blue-600 to-blue-800" }] :
-  [{ key: "pilotos", label: "Pilotos", desc: "Gestión de pilotos", icon: Users, count: counts.pilotos, path: "/pilotos", gradient: "from-green-600 to-green-800" }, { key: "aeronaves", label: "Aeronaves", desc: "Gestión de aeronaves", icon: Drone, count: counts.aeronaves, path: "/aeronaves", gradient: "from-green-600 to-green-800" },
-  { key: "baterias", label: "Baterías", desc: "Gestión de baterías", icon: BatteryCharging, count: counts.baterias, path: "/baterias", gradient: "from-green-600 to-green-800" },
+  [{ key: "pilotos", label: "Pilotos", desc: "Gestión de pilotos", icon: Users, count: counts.pilotos, path: "/pilotos", gradient: "from-green-600 to-green-800" }, { key: "aeronaves", label: "Aeronaves", desc: "Gestión de aeronaves", icon: Drone, count: counts.aeronaves, path: "/aeronaves", gradient: "from-green-600 to-green-800", warning: incidenciasCount.Aeronave },
+  { key: "baterias", label: "Baterías", desc: "Gestión de baterías", icon: BatteryCharging, count: counts.baterias, path: "/baterias", gradient: "from-green-600 to-green-800", warning: incidenciasCount.Bateria },
   { key: "misiones", label: "Misiones", desc: "Catálogo de misiones", icon: Target, count: counts.misiones, path: "/misiones", gradient: "from-green-600 to-green-800" },
-  { key: "operaciones", label: "Operaciones", desc: "Vuelos y planes operacionales", icon: ClipboardList, count: planesPendientes, path: "/operaciones", gradient: "from-blue-600 to-blue-800" }];
+  { key: "operaciones", label: "Operaciones", desc: "Vuelos y planes operacionales", icon: ClipboardList, count: planesPendientes, path: "/operaciones", gradient: "from-blue-600 to-blue-800" },
+  { key: "panel", label: "Panel Estadístico", desc: "Gráficas e indicadores de la flota", icon: BarChart3, count: null, path: "/panel", gradient: "from-purple-600 to-purple-800" }];
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-100 relative rounded opacity-100">
-      <div className="max-w-6xl mx-auto px-6 py-12">
-        <div className="flex flex-wrap justify-end gap-2 mb-6 no-print">
+      <div className="max-w-6xl mx-auto px-6 py-8">
+        <div className="flex flex-wrap justify-end gap-2 mb-4 no-print">
+          {user?.role === "superadmin" && (incidenciasCount.Aeronave + incidenciasCount.Bateria) > 0 && (
+            <Button variant="outline" size="sm" className="text-amber-700 border-amber-200 hover:bg-amber-50" onClick={() => navigate("/incidencias")}>
+              <AlertTriangle className="w-4 h-4" /> Avisos ({incidenciasCount.Aeronave + incidenciasCount.Bateria})
+            </Button>
+          )}
           {(user?.role === "admin" || user?.role === "superadmin") && (
             <Button variant="outline" size="sm" onClick={() => navigate("/admin/usuarios")}>
               <ShieldCheck className="w-4 h-4" /> Usuarios
@@ -69,17 +97,17 @@ export default function Home() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
-          className="mb-12">
+          className="mb-8">
           
           <p className="text-sm font-medium text-slate-400 uppercase tracking-widest mb-2">MENÚ PRINCIPAL</p>
           <div className="flex items-center gap-4">
-            <h1 className="text-4xl md:text-5xl font-bold text-slate-900 tracking-tight">Pegaso Control UAS</h1>
-            <img src="/logo-pegaso.gif" alt="Unidad Pegaso" className="h-16 md:h-20 w-auto" />
+            <h1 className="text-3xl md:text-4xl font-bold text-slate-900 tracking-tight">Pegaso Control UAS</h1>
+            <img src="/logo-pegaso.gif" alt="Unidad Pegaso" className="h-14 md:h-16 w-auto" />
           </div>
-          <p className="text-slate-500 mt-3 text-lg">Gestiona pilotos, aeronaves y baterías desde un único panel.</p>
+          <p className="text-slate-500 mt-2 text-base">Gestiona pilotos, aeronaves y baterías desde un único panel.</p>
         </motion.div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
           {cards.map((c, i) => {
             const Icon = c.icon;
             return (
@@ -90,20 +118,25 @@ export default function Home() {
                 transition={{ duration: 0.5, delay: 0.1 * (i + 1) }}
                 whileHover={{ y: -6 }}
                 onClick={() => navigate(c.path)}
-                className="group relative overflow-hidden rounded-2xl bg-white border border-slate-200 p-8 text-left shadow-sm hover:shadow-xl transition-shadow">
+                className="group relative overflow-hidden rounded-2xl bg-white border border-slate-200 p-6 text-left shadow-sm hover:shadow-xl transition-shadow">
                 
                 <div className={`absolute inset-0 bg-gradient-to-br ${c.gradient} opacity-0 group-hover:opacity-5 transition-opacity`} />
-                <div className="flex items-start justify-between mb-6">
-                  <div className={`w-14 h-14 rounded-xl bg-gradient-to-br ${c.gradient} flex items-center justify-center shadow-lg`}>
-                    <Icon className="w-7 h-7 text-white" />
+                <div className="flex items-start justify-between mb-4">
+                  <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${c.gradient} flex items-center justify-center shadow-lg relative`}>
+                    <Icon className="w-6 h-6 text-white" />
+                    {c.warning > 0 && (
+                      <span className="absolute -top-2 -right-2 bg-red-600 text-white text-xs font-bold rounded-full w-6 h-6 flex items-center justify-center border-2 border-white" title="Mantenimiento vencido">
+                        {c.warning}
+                      </span>
+                    )}
                   </div>
-                  <span className="text-5xl font-bold text-slate-100 group-hover:text-slate-200 transition-colors">
+                  <span className="text-4xl font-bold text-slate-100 group-hover:text-slate-200 transition-colors">
                     {c.count === null ? "—" : c.count}
                   </span>
                 </div>
-                <h2 className="text-2xl font-semibold text-slate-900 mb-1">{c.label}</h2>
-                <p className="text-slate-500">{c.desc}</p>
-                <div className="mt-6 flex items-center text-sm font-medium text-slate-700 group-hover:text-slate-900">
+                <h2 className="text-xl font-semibold text-slate-900 mb-1">{c.label}</h2>
+                <p className="text-slate-500 text-sm">{c.desc}</p>
+                <div className="mt-4 flex items-center text-sm font-medium text-slate-700 group-hover:text-slate-900">
                   Acceder al panel
                   
                 </div>
@@ -111,30 +144,6 @@ export default function Home() {
 
           })}
         </div>
-
-        {!isRestrictedUser && (
-          <div className="mt-6">
-            <motion.button
-              initial={{ opacity: 0, y: 24 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: 0.15 }}
-              whileHover={{ y: -6 }}
-              onClick={() => navigate("/panel")}
-              className="group relative overflow-hidden rounded-2xl bg-white border border-slate-200 p-8 text-left shadow-sm hover:shadow-xl transition-shadow w-full"
-            >
-              <div className="absolute inset-0 bg-gradient-to-r from-green-600 to-green-800 opacity-0 group-hover:opacity-5 transition-opacity" />
-              <div className="flex items-center gap-5">
-                <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-green-600 to-green-800 flex items-center justify-center shadow-lg shrink-0">
-                  <BarChart3 className="w-7 h-7 text-white" />
-                </div>
-                <div className="flex-1">
-                  <h2 className="text-xl font-semibold text-slate-900 mb-1">Panel Estadístico</h2>
-                  <p className="text-slate-500">Resumen global: vuelos, aeronaves, pilotos y baterías.</p>
-                </div>
-              </div>
-            </motion.button>
-          </div>
-        )}
       </div>
       <div className="absolute bottom-3 right-4 text-xs text-slate-300 select-none no-print">
         DNT

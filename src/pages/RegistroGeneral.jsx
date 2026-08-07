@@ -3,10 +3,11 @@ import db from "@/api/base44Client";
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { ArrowLeft, Plus, Pencil, Trash2, FileText, Search, Upload, Check, X } from "lucide-react";
+import { ArrowLeft, Plus, Pencil, Trash2, FileText, Search, Upload, Check, X, ArrowUpDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/lib/AuthContext";
 
@@ -27,6 +28,8 @@ export default function RegistroGeneral() {
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState(null);
   const [query, setQuery] = useState("");
+  const [sortCriteria, setSortCriteria] = useState([{ field: "fecha", dir: "desc" }]);
+  const [sortOpen, setSortOpen] = useState(false);
   const [selected, setSelected] = useState([]);
   const [bulkOpen, setBulkOpen] = useState(false);
   const [busyId, setBusyId] = useState(null);
@@ -65,6 +68,45 @@ export default function RegistroGeneral() {
     const q = query.toLowerCase();
     return [v.matricula, v.piloto, v.mision, v.bateria].some((x) => (x || "").toLowerCase().includes(q));
   });
+
+  const SORT_FIELDS = [
+    { value: "fecha", label: "Fecha de vuelo", type: "date" },
+    { value: "hora_despegue", label: "Hora de despegue", type: "text" },
+    { value: "matricula", label: "Aeronave (matrícula)", type: "text" },
+    { value: "piloto", label: "Piloto", type: "text" },
+    { value: "mision", label: "Misión", type: "text" },
+    { value: "duracion", label: "Duración del vuelo", type: "number" },
+    { value: "estado", label: "Estado", type: "text" },
+  ];
+  const getFieldValue = (v, field) => {
+    if (field === "duracion") return flightDuration(v.hora_despegue, v.hora_aterrizaje);
+    if (field === "estado") return v.estado || "pendiente";
+    return v[field];
+  };
+  const sorted = [...filtered].sort((a, b) => {
+    for (const { field, dir } of sortCriteria) {
+      const fieldDef = SORT_FIELDS.find((f) => f.value === field);
+      const va = getFieldValue(a, field);
+      const vb = getFieldValue(b, field);
+      let cmp;
+      if (fieldDef?.type === "number") cmp = (va || 0) - (vb || 0);
+      else cmp = naturalCompare(va, vb);
+      if (cmp !== 0) return dir === "desc" ? -cmp : cmp;
+    }
+    return 0;
+  });
+
+  const addSortCriterion = () => {
+    const used = sortCriteria.map((c) => c.field);
+    const next = SORT_FIELDS.find((f) => !used.includes(f.value));
+    if (next) setSortCriteria([...sortCriteria, { field: next.value, dir: "asc" }]);
+  };
+  const updateSortCriterion = (idx, patch) => {
+    setSortCriteria((cs) => cs.map((c, i) => (i === idx ? { ...c, ...patch } : c)));
+  };
+  const removeSortCriterion = (idx) => {
+    setSortCriteria((cs) => cs.filter((_, i) => i !== idx));
+  };
 
   const remove = async (id) => {
     try {
@@ -139,6 +181,9 @@ export default function RegistroGeneral() {
               <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
               <Input className="pl-9" placeholder="Buscar..." value={query} onChange={(e) => setQuery(e.target.value)} />
             </div>
+            <Button onClick={() => setSortOpen((v) => !v)} variant="outline">
+              <ArrowUpDown className="w-4 h-4 mr-1" /> Ordenar
+            </Button>
             <Button onClick={() => setBulkOpen(true)} variant="outline"><Upload className="w-4 h-4 mr-1" /> Carga masiva</Button>
             {isAdminLevel && pendientes > 0 && (
               <Button onClick={validarTodosPendientes} disabled={busyId === "bulk"} variant="outline" className="text-green-700 border-green-200 hover:bg-green-50">
@@ -149,6 +194,52 @@ export default function RegistroGeneral() {
             <PrintButton />
           </div>
         </div>
+
+        {sortOpen && (
+          <div className="mb-6 p-4 rounded-xl border border-slate-200 bg-white no-print space-y-2">
+            <p className="text-sm font-medium text-slate-700 mb-1">Ordenar por (por prioridad)</p>
+            {sortCriteria.map((c, idx) => {
+              const fieldDef = SORT_FIELDS.find((f) => f.value === c.field);
+              const isText = fieldDef?.type !== "number" && fieldDef?.type !== "date";
+              return (
+                <div key={idx} className="flex items-center gap-2 flex-wrap">
+                  <Select value={c.field} onValueChange={(v) => updateSortCriterion(idx, { field: v })}>
+                    <SelectTrigger className="w-56"><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      {SORT_FIELDS.map((f) => <SelectItem key={f.value} value={f.value}>{f.label}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                  <Select value={c.dir} onValueChange={(v) => updateSortCriterion(idx, { dir: v })}>
+                    <SelectTrigger className="w-44"><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      {isText ? (
+                        <>
+                          <SelectItem value="asc">A → Z</SelectItem>
+                          <SelectItem value="desc">Z → A</SelectItem>
+                        </>
+                      ) : (
+                        <>
+                          <SelectItem value="asc">Menor a mayor</SelectItem>
+                          <SelectItem value="desc">Mayor a menor</SelectItem>
+                        </>
+                      )}
+                    </SelectContent>
+                  </Select>
+                  {sortCriteria.length > 1 && (
+                    <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => removeSortCriterion(idx)}>
+                      <X className="w-4 h-4" />
+                    </Button>
+                  )}
+                </div>
+              );
+            })}
+            {sortCriteria.length < SORT_FIELDS.length && (
+              <Button variant="outline" size="sm" onClick={addSortCriterion}>
+                <Plus className="w-3.5 h-3.5 mr-1" /> Añadir criterio
+              </Button>
+            )}
+          </div>
+        )}
 
         {selected.length > 0 && (
           <div className="flex items-center gap-3 mb-4 no-print">
@@ -201,7 +292,7 @@ export default function RegistroGeneral() {
                 </tr>
               </thead>
               <tbody>
-                {filtered.map((v, i) => {
+                {sorted.map((v, i) => {
                   const dur = flightDuration(v.hora_despegue, v.hora_aterrizaje);
                   return (
                     <motion.tr
