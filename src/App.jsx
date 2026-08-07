@@ -31,6 +31,7 @@ import Misiones from '@/pages/Misiones';
 import PlanesVuelo from '@/pages/PlanesVuelo';
 import PlanVueloForm from '@/pages/PlanVueloForm';
 import Operaciones from '@/pages/Operaciones';
+import Incidencias from '@/pages/Incidencias';
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
@@ -71,6 +72,7 @@ const AuthenticatedApp = () => {
         <Route path="/planes-vuelo/nuevo" element={<PlanVueloForm />} />
         <Route path="/planes-vuelo/:id" element={<PlanVueloForm />} />
         <Route path="/operaciones" element={<Operaciones />} />
+        <Route path="/incidencias" element={<Incidencias />} />
         <Route element={<StaffRoute />}>
           <Route path="/panel" element={<PanelEstadistico />} />
           <Route path="/misiones" element={<Misiones />} />
