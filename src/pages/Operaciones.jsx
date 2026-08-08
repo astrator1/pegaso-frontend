@@ -11,12 +11,15 @@ export default function Operaciones() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const [planesPendientes, setPlanesPendientes] = useState(null);
+  const [planesTotal, setPlanesTotal] = useState(null);
   const [vuelosPendientes, setVuelosPendientes] = useState(null);
+  const [vuelosTotal, setVuelosTotal] = useState(null);
 
   useEffect(() => {
     (async () => {
       try {
         const planes = await db.entities.PlanVuelo.list();
+        setPlanesTotal(planes.length);
         setPlanesPendientes(planes.filter((p) => !p.estado || p.estado === "pendiente").length);
       } catch (e) { /* ignore */ }
     })();
@@ -26,6 +29,7 @@ export default function Operaciones() {
     (async () => {
       try {
         const vuelos = await db.entities.Vuelo.list();
+        setVuelosTotal(vuelos.length);
         setVuelosPendientes(vuelos.filter((v) => !v.estado || v.estado === "pendiente").length);
       } catch (e) { /* ignore */ }
     })();
@@ -34,8 +38,8 @@ export default function Operaciones() {
   const isAdminLevel = user?.role === "admin" || user?.role === "superadmin";
 
   const cards = [
-    { key: "registro", label: "Registro de Vuelos", desc: isAdminLevel ? "Consulta, registra y valida vuelos" : "Consulta y registra tus vuelos", icon: FileText, path: "/aeronaves/registro", gradient: "from-green-600 to-green-800", badge: isAdminLevel ? vuelosPendientes : null },
-    { key: "planes", label: "Planes de Vuelo Operacional", desc: isAdminLevel ? "Autoriza los planes de la unidad" : "Crea y consulta tus planes", icon: ClipboardList, path: "/planes-vuelo", gradient: "from-blue-600 to-blue-800", badge: isAdminLevel ? planesPendientes : null },
+    { key: "registro", label: "Registro de Vuelos", desc: isAdminLevel ? "Consulta, registra y valida vuelos" : "Consulta y registra tus vuelos", icon: FileText, path: "/aeronaves/registro", gradient: "from-green-600 to-green-800", badge: isAdminLevel ? vuelosPendientes : null, count: vuelosTotal },
+    { key: "planes", label: "Planes de Vuelo Operacional", desc: isAdminLevel ? "Autoriza los planes de la unidad" : "Crea y consulta tus planes", icon: ClipboardList, path: "/planes-vuelo", gradient: "from-blue-600 to-blue-800", badge: isAdminLevel ? planesPendientes : null, count: planesTotal },
   ];
 
   return (
@@ -71,6 +75,11 @@ export default function Operaciones() {
                       </span>
                     )}
                   </div>
+                  {c.count !== null && c.count !== undefined && (
+                    <span className="text-3xl font-bold text-slate-100 group-hover:text-slate-200 transition-colors tabular-nums">
+                      {c.count}
+                    </span>
+                  )}
                 </div>
                 <h2 className="text-xl font-semibold text-slate-900 mb-1">{c.label}</h2>
                 <p className="text-slate-500 text-sm">{c.desc}</p>

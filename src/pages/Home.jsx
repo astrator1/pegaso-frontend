@@ -19,59 +19,47 @@ export default function Home() {
   const [incidenciasCount, setIncidenciasCount] = useState({ Aeronave: 0, Bateria: 0 });
 
   React.useEffect(() => {
-    if (!(user?.role === "admin" || user?.role === "superadmin")) return;
+    if (isRestrictedUser) return; // un piloto no necesita estos totales, solo accede a "Grabar vuelo"
+    const isAdminLevel = user?.role === "admin" || user?.role === "superadmin";
     (async () => {
       try {
-        const [aeronaves, baterias, mantenimientos, descartadas] = await Promise.all([
+        const [p, a, b, m, mantenimientos, descartadas, planes, vuelos] = await Promise.all([
+          db.entities.Piloto.list(),
           db.entities.Aeronave.list(),
           db.entities.Bateria.list(),
-          db.entities.BateriaMantenimiento.list(),
-          db.entities.IncidenciaDescartada.list(),
+          db.entities.Mision.list(),
+          isAdminLevel ? db.entities.BateriaMantenimiento.list() : Promise.resolve([]),
+          isAdminLevel ? db.entities.IncidenciaDescartada.list() : Promise.resolve([]),
+          isAdminLevel ? db.entities.PlanVuelo.list() : Promise.resolve([]),
+          isAdminLevel ? db.entities.Vuelo.list() : Promise.resolve([]),
         ]);
-        const descartadasClaves = new Set(descartadas.map((d) => d.clave));
-        const activas = computeIncidencias(aeronaves, baterias, mantenimientos).filter((i) => !descartadasClaves.has(i.clave));
-        setIncidenciasCount({
-          Aeronave: activas.filter((i) => i.tipo === "Aeronave").length,
-          Bateria: activas.filter((i) => i.tipo === "Batería").length,
-        });
-      } catch (e) { /* ignore */ }
-    })();
-  }, [user]);
 
-  React.useEffect(() => {
-    if (isRestrictedUser) return; // un piloto no necesita estos totales, solo accede a "Grabar vuelo"
-    (async () => {
-      try {
-        const [p, a, b, m] = await Promise.all([
-        db.entities.Piloto.list(),
-        db.entities.Aeronave.list(),
-        db.entities.Bateria.list(),
-        db.entities.Mision.list()]
-        );
         setCounts({ pilotos: p.filter((x) => x.gestionado !== false).length, aeronaves: a.filter((x) => !x.retirada).length, baterias: b.filter((x) => x.estado !== "Desechada").length, misiones: m.length });
+
+        if (isAdminLevel) {
+          const descartadasClaves = new Set(descartadas.map((d) => d.clave));
+          const activas = computeIncidencias(a, b, mantenimientos).filter((i) => !descartadasClaves.has(i.clave));
+          setIncidenciasCount({
+            Aeronave: activas.filter((i) => i.tipo === "Aeronave").length,
+            Bateria: activas.filter((i) => i.tipo === "Batería").length,
+          });
+
+          const planesPend = planes.filter((pl) => !pl.estado || pl.estado === "pendiente").length;
+          const vuelosPend = vuelos.filter((v) => !v.estado || v.estado === "pendiente").length;
+          setPlanesPendientes(planesPend + vuelosPend);
+        }
       } catch (e) {
-
         // ignore load errors
-      }})();}, [isRestrictedUser]);
-
-  React.useEffect(() => {
-    if (!(user?.role === "admin" || user?.role === "superadmin")) return;
-    (async () => {
-      try {
-        const [planes, vuelos] = await Promise.all([db.entities.PlanVuelo.list(), db.entities.Vuelo.list()]);
-        const planesPend = planes.filter((p) => !p.estado || p.estado === "pendiente").length;
-        const vuelosPend = vuelos.filter((v) => !v.estado || v.estado === "pendiente").length;
-        setPlanesPendientes(planesPend + vuelosPend);
-      } catch (e) { /* ignore */ }
+      }
     })();
-  }, [user]);
+  }, [isRestrictedUser, user]);
 
   const cards = isRestrictedUser ?
   [{ key: "operaciones", label: "Operaciones", desc: "Registrar vuelo y Plan de Vuelo Operacional", icon: ClipboardList, count: null, path: "/operaciones", gradient: "from-blue-600 to-blue-800" }] :
   [{ key: "pilotos", label: "Pilotos", desc: "Gestión de pilotos", icon: Users, count: counts.pilotos, path: "/pilotos", gradient: "from-green-600 to-green-800" }, { key: "aeronaves", label: "Aeronaves", desc: "Gestión de aeronaves", icon: Drone, count: counts.aeronaves, path: "/aeronaves", gradient: "from-green-600 to-green-800", warning: incidenciasCount.Aeronave },
   { key: "baterias", label: "Baterías", desc: "Gestión de baterías", icon: BatteryCharging, count: counts.baterias, path: "/baterias", gradient: "from-green-600 to-green-800", warning: incidenciasCount.Bateria },
   { key: "misiones", label: "Misiones", desc: "Catálogo de misiones", icon: Target, count: counts.misiones, path: "/misiones", gradient: "from-green-600 to-green-800" },
-  { key: "operaciones", label: "Operaciones", desc: "Vuelos y planes operacionales", icon: ClipboardList, count: planesPendientes, path: "/operaciones", gradient: "from-blue-600 to-blue-800" },
+  { key: "operaciones", label: "Operaciones", desc: "Vuelos y planes operacionales", icon: ClipboardList, count: null, path: "/operaciones", gradient: "from-blue-600 to-blue-800", warning: planesPendientes },
   { key: "panel", label: "Panel Estadístico", desc: "Gráficas e indicadores de la flota", icon: BarChart3, count: null, path: "/panel", gradient: "from-purple-600 to-purple-800" }];
 
   return (
@@ -130,9 +118,11 @@ export default function Home() {
                       </span>
                     )}
                   </div>
-                  <span className="text-4xl font-bold text-slate-100 group-hover:text-slate-200 transition-colors">
-                    {c.count === null ? "—" : c.count}
-                  </span>
+                  {c.count !== null && c.count !== undefined && (
+                    <span className="text-4xl font-bold text-slate-100 group-hover:text-slate-200 transition-colors tabular-nums">
+                      {c.count}
+                    </span>
+                  )}
                 </div>
                 <h2 className="text-xl font-semibold text-slate-900 mb-1">{c.label}</h2>
                 <p className="text-slate-500 text-sm">{c.desc}</p>
